@@ -33,30 +33,32 @@
 
         .font-serif { font-family: var(--font-serif); }
 
-        /* Styles pour la liste de thèmes verticale */
-        .theme-list-item {
-            display: block;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
+        /* Styles pour les filtres (Pill Buttons) */
+        .theme-pill-button {
+            flex-shrink: 0; /* Empêche les boutons de se compresser */
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill shape */
             color: var(--color-secondary);
+            background-color: #e9f5e1;
             cursor: pointer;
             font-weight: 500;
             transition: all 0.2s ease-in-out;
-            border-left: 4px solid transparent;
+            border: 2px solid transparent;
+            font-size: 0.875rem; /* text-sm */
+            white-space: nowrap;
         }
-        .theme-list-item:hover {
-            background-color: #e9f5e1;
-            border-left-color: var(--color-primary);
-            transform: translateX(2px);
+        .theme-pill-button:hover {
+            background-color: #d1e7c9;
+            border-color: var(--color-primary);
         }
-        .theme-list-item.active {
+        .theme-pill-button.active {
             background-color: var(--color-primary);
             color: white;
             font-weight: 700;
-            border-left-color: var(--color-accent);
+            border-color: var(--color-accent);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        
+
         /* Badges de thème dans les cartes */
         .card-theme-badge {
             background-color: #e9f5e1;
@@ -70,6 +72,16 @@
             transform: scale(1.05);
         }
 
+        /* Mise en évidence du texte recherché */
+        .search-highlight {
+            background-color: var(--color-accent); /* Jaune/Ambre pour le highlight */
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 700;
+            box-shadow: 0 0 5px rgba(255, 193, 7, 0.5); /* Ombre subtile */
+            line-height: 1.5; /* Assure une bonne hauteur de ligne pour le surlignage */
+        }
+
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -81,7 +93,7 @@
         .highlight {
             transition: all 0.3s ease;
             transform: scale(1.03);
-            box-shadow: 0 0 0 5px var(--color-accent), 0 10px 30px rgba(0,0,0,0.15); /* Mettre en évidence avec une bordure de couleur accent */
+            box-shadow: 0 0 0 5px var(--color-accent), 0 10px 30px rgba(0,0,0,0.15); 
         }
         
         /* Toast de notification */
@@ -108,11 +120,26 @@
             visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
             transform: translateY(20px);
+            z-index: 50;
         }
         #back-to-top.visible {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
+        }
+        
+        /* Conteneur des thèmes en défilement horizontal */
+        #theme-list-container-wrapper {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            /* Masquer la scrollbar par défaut pour un look plus subtil */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+
+        #theme-list-container-wrapper::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
     </style>
 </head>
@@ -130,44 +157,43 @@
 
         <section id="proverb-of-the-day-section" class="mb-12" aria-labelledby="proverb-of-the-day-title">
             <h2 id="proverb-of-the-day-title" class="text-3xl font-serif text-[var(--color-primary)] mb-5 text-center font-semibold">Proverbe du Jour 💡</h2>
-            <div id="proverb-of-the-day-card" class="proverb-of-the-day max-w-3xl mx-auto border-t-8 border-[var(--color-accent)] bg-white/95 p-6 rounded-xl shadow-2xl relative transition-all duration-500">
+            <div id="proverb-of-the-day-card" class="proverb-of-the-day max-w-3xl mx-auto">
                 </div>
         </section>
 
-        <div class="flex flex-col lg:flex-row lg:gap-8">
-
-            <aside class="w-full lg:w-1/3 xl:w-1/4 order-1 lg:order-2 mb-8 lg:mb-0">
-                <div class="lg:sticky lg:top-8">
-                    <h3 class="text-2xl font-serif text-[var(--color-primary)] mb-4 text-center lg:text-left font-medium">Filtrer par Thèmes</h3>
-                    <nav aria-label="Filtres de thèmes Kabyles" class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 max-h-[40vh] overflow-y-auto border border-gray-100">
-                        <div id="theme-list-container">
-                            </div>
-                    </nav>
+        <div id="filter-and-search-area" class="w-full">
+            
+            <div id="search-filter-bar" class="mb-4 p-4 bg-white/70 backdrop-blur-md rounded-xl shadow-lg sticky top-0 z-10 border border-gray-100">
+                <div class="flex flex-col sm:flex-row gap-4 items-stretch">
+                    <input type="text" id="search-input" placeholder="Rechercher un proverbe (Kabyle ou Français)..."
+                           aria-label="Champ de recherche de proverbe"
+                           class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/30 transition duration-200 text-lg shadow-inner">
+                    <button id="random-btn" aria-label="Afficher un proverbe aléatoire" class="w-full sm:w-auto px-5 py-3 bg-[var(--color-accent)] text-[var(--color-secondary)] font-semibold rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 shadow-md transform hover:scale-[1.02]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                        <span>Hasard</span>
+                    </button>
                 </div>
-            </aside>
-
-            <div class="w-full lg:w-2/3 xl:w-3/4 order-2 lg:order-1">
-                <div id="search-filter-bar" class="mb-8 p-4 bg-white/70 backdrop-blur-md rounded-xl shadow-lg sticky top-0 z-10 border border-gray-100">
-                    <div class="flex flex-col sm:flex-row gap-4 items-stretch">
-                        <input type="text" id="search-input" placeholder="Rechercher un proverbe (Kabyle ou Français)..."
-                               aria-label="Champ de recherche de proverbe"
-                               class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/30 transition duration-200 text-lg shadow-inner">
-                        <button id="random-btn" aria-label="Afficher un proverbe aléatoire" class="w-full sm:w-auto px-5 py-3 bg-[var(--color-accent)] text-[var(--color-secondary)] font-semibold rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 shadow-md transform hover:scale-[1.02]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
-                            <span>Hasard</span>
-                        </button>
+            </div>
+            
+            <nav id="theme-filter-nav" aria-label="Filtres de thèmes Kabyles" class="mb-8 p-3 -mt-2 bg-white/50 backdrop-blur-sm rounded-xl shadow-md border border-gray-100">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-sm font-bold text-[var(--color-secondary)] flex-shrink-0">Filtrer par thème :</h3>
+                    <div id="theme-list-container-wrapper" class="flex-grow">
+                        <div id="theme-list-container" class="flex gap-2">
+                            </div>
                     </div>
                 </div>
-
-                <main id="results-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    </main>
-
-                <p id="no-results" class="text-center text-2xl text-gray-500 mt-12 hidden font-serif p-4 border border-dashed rounded-lg">
-                    😔 Aucun proverbe ne correspond à votre recherche ou filtre.
-                </p>
-            </div>
+            </nav>
 
         </div>
+        
+        <main id="results-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            </main>
+
+        <p id="no-results" class="text-center text-2xl text-gray-500 mt-12 hidden font-serif p-4 border border-dashed rounded-lg">
+            😔 Aucun proverbe ne correspond à votre recherche ou filtre.
+        </p>
+
     </div>
     
     <div id="toast" class="bg-green-700 text-white py-2 px-5 rounded-full shadow-xl">
@@ -345,27 +371,58 @@
             const randomBtn = document.getElementById('random-btn');
             const backToTopBtn = document.getElementById('back-to-top');
             const themeListContainer = document.getElementById('theme-list-container');
-            // Retrait de la référence directe à 'Tous' car il sera créé dynamiquement
-
+            
             let activeTheme = 'Tous';
             
             // Fonction pour normaliser le texte (minuscules, accents retirés)
             const normalizeText = (text) => {
                 if (typeof text !== 'string') return '';
-                // Supprime les accents et met en minuscules
                 return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
             };
+            
+            // FONCTION DE SURLELIGNAGE: Surligne le texte correspondant à la requête
+            const highlightMatch = (text, query) => {
+                if (!query) return text;
 
-            // Fonction de copie moderne avec fallback
+                const normalizedQuery = normalizeText(query);
+                // Crée une expression régulière globale, insensible à la casse et aux accents.
+                const regex = new RegExp(normalizedQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                const normalizedText = normalizeText(text);
+
+                let output = '';
+                let lastIndex = 0;
+                let match;
+
+                while ((match = regex.exec(normalizedText)) !== null) {
+                    // Le match est fait sur le texte normalisé, mais on prend l'index pour le texte original
+                    
+                    // Ajoute la partie du texte non matchée (avec la casse originale)
+                    output += text.substring(lastIndex, match.index);
+                    
+                    // Récupère la partie matchée du texte original
+                    const matchedText = text.substring(match.index, match.index + match[0].length);
+                    
+                    // Ajoute la partie matchée avec le surlignage
+                    output += `<span class="search-highlight">${matchedText}</span>`;
+                    lastIndex = match.index + match[0].length;
+                }
+
+                // Ajoute le reste du texte
+                output += text.substring(lastIndex);
+                
+                return output;
+            };
+
+            // Fonction de copie
             const copyToClipboard = async (text) => {
                 try {
                     await navigator.clipboard.writeText(text);
                     showToast();
                 } catch (err) {
-                    // Fallback pour les anciens navigateurs ou contextes non sécurisés
+                    // Fallback pour les anciens navigateurs
                     const textArea = document.createElement('textarea');
                     textArea.value = text;
-                    textArea.style.position = 'fixed'; // Évite le défilement
+                    textArea.style.position = 'fixed'; 
                     textArea.style.left = '-9999px';
                     document.body.appendChild(textArea);
                     textArea.select();
@@ -386,28 +443,30 @@
             };
             
             // Fonction pour créer le HTML d'une carte de proverbe
-            const createProverbCardHTML = (proverb, isDaily = false) => {
-                // Utilise la fonction de nettoyage et capitalisation pour les badges
+            const createProverbCardHTML = (proverb, isDaily = false, query = '') => {
                 const themes = proverb.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(t => t.length > 0);
                 
                 const themesHtml = themes.map(theme => {
                     const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase();
-                    // Utilise normalizeText pour l'attribut data-theme afin de garantir une correspondance
                     return `<button class="card-theme-badge px-2 py-1 rounded-full text-xs font-semibold" data-theme="${normalizeText(capitalizedTheme)}">${capitalizedTheme}</button>`;
                 }).join('');
 
                 const cardClasses = isDaily 
-                    ? 'bg-white/95 p-6 rounded-xl shadow-2xl border-t-8 border-[var(--color-accent)] relative transition-all duration-500' 
+                    ? 'bg-white/95 p-6 rounded-xl shadow-2xl border-t-8 border-[var(--color-accent)] relative transition-all duration-500 max-w-3xl mx-auto' 
                     : 'proverb-card bg-white/90 p-5 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col border-l-4 border-[var(--color-primary)]';
+
+                // Application du surlignage
+                const kabyleContent = highlightMatch(proverb.kabyle, query);
+                const francaisContent = highlightMatch(proverb.francais, query);
 
                 return `
                     <div class="${cardClasses}">
                         <div class="flex-grow">
                             <p class="text-xl font-serif font-bold text-[var(--color-secondary)] mb-2 italic leading-relaxed">
-                                « ${proverb.kabyle} »
+                                « ${kabyleContent} »
                             </p>
                             <p class="text-gray-700 text-lg mb-4 border-b pb-3 font-light">
-                                — ${proverb.francais}
+                                — ${francaisContent}
                             </p>
                             <div class="flex flex-wrap gap-2 items-center min-h-[30px]">
                                 ${themesHtml}
@@ -426,7 +485,7 @@
             const displayProverbOfTheDay = () => {
                 const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
                 const proverbIndex = dayOfYear % proverbsData.length;
-                const proverb = {...proverbsData[proverbIndex], originalIndex: proverbIndex}; // Ajout de l'index pour la gestion des événements
+                const proverb = {...proverbsData[proverbIndex], originalIndex: proverbIndex}; 
                 proverbOfTheDayCard.innerHTML = createProverbCardHTML(proverb, true);
                 addCardEventListeners(proverbOfTheDayCard, proverb);
             };
@@ -447,29 +506,25 @@
                         e.stopPropagation();
                         const themeToFilterNormalized = badge.dataset.theme;
                         
-                        // Trouve le bouton de filtre principal correspondant
-                        const mainFilterButton = document.querySelector(`.theme-list-item[data-theme="${themeToFilterNormalized}"]`);
+                        const mainFilterButton = document.querySelector(`.theme-pill-button[data-theme="${themeToFilterNormalized}"]`);
                         if (mainFilterButton) {
-                            // Simule le clic sur le bouton de la sidebar
                             mainFilterButton.click();
-                            // Défilement vers la barre de recherche/filtre pour l'UX
-                            document.getElementById('search-filter-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            document.getElementById('theme-filter-nav').scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
                     });
                 });
             };
 
             // Affichage des proverbes filtrés
-            const renderProverbs = (filteredProverbs) => {
+            const renderProverbs = (filteredProverbs, query) => {
                 resultsContainer.innerHTML = '';
                 noResults.classList.toggle('hidden', filteredProverbs.length > 0);
 
                 if (filteredProverbs.length > 0) {
                     filteredProverbs.forEach((proverb) => {
                         const cardWrapper = document.createElement('div');
-                        // Utilise l'index original pour faciliter la fonction aléatoire
                         cardWrapper.id = `proverb-${proverb.originalIndex}`; 
-                        cardWrapper.innerHTML = createProverbCardHTML(proverb);
+                        cardWrapper.innerHTML = createProverbCardHTML(proverb, false, query);
                         resultsContainer.appendChild(cardWrapper);
                         addCardEventListeners(cardWrapper, proverb);
                     });
@@ -478,38 +533,42 @@
 
             // Mise à jour de l'affichage (filtre et recherche)
             const updateDisplay = () => {
+                const rawQuery = searchInput.value;
+                const normalizedQuery = normalizeText(rawQuery);
+                
                 const proverbsToRender = proverbsData.map((proverb, index) => ({...proverb, originalIndex: index}));
                 
                 const filteredProverbs = proverbsToRender.filter(proverb => {
                     const normalizedActiveTheme = normalizeText(activeTheme);
-                    // Le proverbe correspond si 'Tous' est actif, ou si le thème normalisé du proverbe inclut le thème actif normalisé
+                    
+                    // 1. Filtrage par Thème
                     const themeMatch = activeTheme === 'Tous' || normalizeText(proverb.theme).includes(normalizedActiveTheme);
                     
-                    const query = normalizeText(searchInput.value);
-                    const queryMatch = !query || 
-                                       normalizeText(proverb.kabyle).includes(query) || 
-                                       normalizeText(proverb.francais).includes(query) ||
-                                       normalizeText(proverb.theme).includes(query);
+                    // 2. Filtrage par Recherche Texte
+                    const queryMatch = !normalizedQuery || 
+                                       normalizeText(proverb.kabyle).includes(normalizedQuery) || 
+                                       normalizeText(proverb.francais).includes(normalizedQuery) ||
+                                       normalizeText(proverb.theme).includes(normalizedQuery);
+                    
                     return themeMatch && queryMatch;
                 });
-                renderProverbs(filteredProverbs);
+                
+                renderProverbs(filteredProverbs, rawQuery);
             };
 
-            // Création des filtres par thèmes
+            // Création des filtres par thèmes (Pill Button en défilement horizontal)
             const renderThemeFilters = () => {
                 const themes = new Set();
                 proverbsData.forEach(p => {
                     p.theme.split(/[,/]/).forEach(t => {
                         const theme = t.trim().replace(/[()]/g, '');
                         if (theme) {
-                            // Stocke la version normalisée pour la correspondance et la version capitalisée pour l'affichage
                             const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase();
                             themes.add({ display: capitalizedTheme, normalized: normalizeText(capitalizedTheme) });
                         }
                     });
                 });
                 
-                // Convertit le Set en Array, enlève les doublons basés sur 'normalized', et trie par affichage
                 const uniqueThemes = Array.from(themes).reduce((acc, curr) => {
                     if (!acc.find(item => item.normalized === curr.normalized)) {
                         acc.push(curr);
@@ -517,22 +576,19 @@
                     return acc;
                 }, []).sort((a, b) => a.display.localeCompare(b.display));
                 
-                // Ajoute l'option "Tous" en premier
-                const sortedThemes = [{ display: 'Tous', normalized: 'tous' }, ...uniqueThemes];
+                const sortedThemes = [{ display: 'Tous les thèmes', normalized: 'tous' }, ...uniqueThemes];
                 
                 themeListContainer.innerHTML = '';
                 sortedThemes.forEach(themeObj => {
-                    const item = document.createElement('a');
+                    const item = document.createElement('button');
                     item.textContent = themeObj.display;
-                    item.href = "#";
                     item.dataset.theme = themeObj.normalized;
-                    // Utilise normalizeText(activeTheme) pour la comparaison pour s'assurer que 'Tous' et 'tous' correspondent
-                    item.className = `theme-list-item ${themeObj.normalized === normalizeText(activeTheme) ? 'active' : ''}`;
+                    item.className = `theme-pill-button ${themeObj.normalized === normalizeText(activeTheme) ? 'active' : ''}`;
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
-                        activeTheme = themeObj.display; // Stocke la version display pour l'état interne
-                        searchInput.value = ''; // Réinitialise la recherche texte en cas de changement de thème
-                        document.querySelectorAll('.theme-list-item').forEach(btn => btn.classList.remove('active'));
+                        activeTheme = themeObj.display.replace(' les thèmes', ''); // Gère le cas de 'Tous les thèmes'
+                        searchInput.value = ''; 
+                        document.querySelectorAll('.theme-pill-button').forEach(btn => btn.classList.remove('active'));
                         item.classList.add('active');
                         updateDisplay();
                     });
@@ -544,15 +600,13 @@
             const showRandomProverb = () => {
                 const originalIndex = Math.floor(Math.random() * proverbsData.length);
                 
-                // 1. Réinitialiser les filtres
+                // 1. Réinitialiser les filtres (pour que le proverbe aléatoire soit visible)
                 searchInput.value = '';
-                if(activeTheme !== 'Tous') {
-                    const tousButton = document.querySelector('.theme-list-item[data-theme="tous"]');
-                    if(tousButton) {
-                        tousButton.click(); // Clic pour mettre à jour l'état et l'affichage
-                    }
+                const tousButton = document.querySelector('.theme-pill-button[data-theme="tous"]');
+                if(tousButton && normalizeText(activeTheme) !== 'tous') {
+                    tousButton.click(); 
                 } else {
-                    updateDisplay(); // Rafraîchit l'affichage s'il était déjà sur 'Tous'
+                    updateDisplay(); 
                 }
                 
                 // 2. Mettre en surbrillance et faire défiler vers la carte aléatoire
@@ -563,12 +617,11 @@
                         const card = cardWrapper.firstElementChild;
                         card.classList.add('highlight');
                         
-                        // Retire la surbrillance après un délai
                         setTimeout(() => {
                             card.classList.remove('highlight');
                         }, 2500);
                     }
-                }, 100); // Petit délai pour laisser le temps à updateDisplay de se terminer
+                }, 100); 
             };
 
             // Gestion du bouton "Retour en haut"
@@ -579,12 +632,11 @@
             backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
             // Initialisation
-            // Pré-traitement pour assurer que tous les proverbes ont l'index original
             proverbsData.forEach((p, i) => p.originalIndex = i);
 
             displayProverbOfTheDay();
             renderThemeFilters();
-            // L'appel à updateDisplay n'est plus nécessaire ici car renderThemeFilters s'en charge
+            updateDisplay(); 
             searchInput.addEventListener('input', updateDisplay);
             randomBtn.addEventListener('click', showRandomProverb);
         });
