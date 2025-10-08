@@ -139,7 +139,7 @@
             <aside class="w-full lg:w-1/3 xl:w-1/4 order-1 lg:order-2 mb-8 lg:mb-0">
                 <div class="lg:sticky lg:top-8">
                     <h3 class="text-2xl font-serif text-[var(--color-primary)] mb-4 text-center lg:text-left font-medium">Filtrer par Thèmes</h3>
-                    <nav aria-label="Filtres de thèmes Kabyles" class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 max-h-[60vh] overflow-y-auto border border-gray-100">
+                    <nav aria-label="Filtres de thèmes Kabyles" class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 max-h-[40vh] overflow-y-auto border border-gray-100">
                         <div id="theme-list-container">
                             </div>
                     </nav>
@@ -345,7 +345,7 @@
             const randomBtn = document.getElementById('random-btn');
             const backToTopBtn = document.getElementById('back-to-top');
             const themeListContainer = document.getElementById('theme-list-container');
-            const allThemeBtn = document.querySelector('.theme-list-item[data-theme="Tous"]');
+            // Retrait de la référence directe à 'Tous' car il sera créé dynamiquement
 
             let activeTheme = 'Tous';
             
@@ -526,6 +526,7 @@
                     item.textContent = themeObj.display;
                     item.href = "#";
                     item.dataset.theme = themeObj.normalized;
+                    // Utilise normalizeText(activeTheme) pour la comparaison pour s'assurer que 'Tous' et 'tous' correspondent
                     item.className = `theme-list-item ${themeObj.normalized === normalizeText(activeTheme) ? 'active' : ''}`;
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -583,7 +584,7 @@
 
             displayProverbOfTheDay();
             renderThemeFilters();
-            updateDisplay();
+            // L'appel à updateDisplay n'est plus nécessaire ici car renderThemeFilters s'en charge
             searchInput.addEventListener('input', updateDisplay);
             randomBtn.addEventListener('click', showRandomProverb);
         });
