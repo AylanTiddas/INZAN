@@ -1,60 +1,63 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sagesse Kabyle - Inzan n yeqbayliyen </title>
+    <title>Inzan n Teqbaylit - Trésors de la Sagesse Kabyle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22 fill=%22%23556B2F%22%3E%E2%9C%A7%3C/text%3E%3C/svg%3E">
     <style>
-        /* Nouvelle palette de couleurs inspirée de l'olivier :
-        - Vert olive principal pour l'identité visuelle.
-        - Vert foncé pour le texte et les éléments secondaires.
-        - Or vieilli pour les accents, rappelant l'huile d'olive.
-        - Crème/lin pour le fond, pour un aspect naturel et doux.
-        */
+        /* Palette de couleurs inspirée de l'olivier et de la terre kabyle */
         :root {
-            --color-bg: #F8F6F2; /* Crème / Lin */
+            --color-bg: #F5F3EF; /* Beige clair, comme la terre sèche */
             --color-text: #3D4A3A; /* Vert très foncé */
-            --color-primary: #556B2F; /* Vert Olive */
+            --color-primary: #4CAF50; /* Vert Olive moderne */
             --color-secondary: #2F4F4F; /* Vert ardoise foncé */
-            --color-accent: #BDB76B; /* Or vieilli / Kaki clair */
+            --color-accent: #FFC107; /* Or vieilli / Jaune ambre */
             --font-serif: 'Tinos', serif;
             --font-sans: 'Raleway', sans-serif;
         }
 
-        /* Motif d'arrière-plan subtil avec des feuilles stylisées pour renforcer le thème.
-        */
+        /* Motif d'arrière-plan subtil inspiré des tissages berbères */
         body {
             background-color: var(--color-bg);
             font-family: var(--font-sans);
             color: var(--color-text);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%239C92AC' fill-opacity='0.08'%3E%3Cpath fill-rule='evenodd' d='M11 0l5 20H6l5-20zm42 31a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM0 72h40v4H0v-4zm0-8h32v4H0v-4zm0-8h48v4H0v-4zm0-8h40v4H0v-4zm0-8h48v4H0v-4zm0-8h32v4H0v-4zM0 0h48v4H0v-4zm0 8h40v4H0V8zm0 8h48v4H0v-4zm0 8h32v4H0v-4z'/%3E%3C/g%3E%3C/svg%3E");
+            /* Motif géométrique discret pour le fond */
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.05' fill='%23BDB76B'%3E%3Cpath d='M98.6 30L50 50L1.4 30L50 10L98.6 30ZM50 70L98.6 50L50 90L1.4 70L50 50Z' /%3E%3C/g%3E%3C/svg%3E");
+            background-size: 50px 50px;
         }
 
-        .font-serif {
-            font-family: var(--font-serif);
-        }
+        .font-serif { font-family: var(--font-serif); }
 
-        /* Style pour les boutons de filtre de thème */
-        .theme-btn {
-            background-color: transparent;
-            border: 1px solid var(--color-accent);
-            color: var(--color-accent);
-            /* Ajout pour compatibilité avec le défilement horizontal */
-            flex-shrink: 0; 
-            transition: all 0.3s ease;
+        /* Styles pour la liste de thèmes verticale */
+        .theme-list-item {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--color-secondary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            border-left: 4px solid transparent;
         }
-        .theme-btn:hover, .theme-btn.active {
-            background-color: var(--color-accent);
+        .theme-list-item:hover {
+            background-color: #e9f5e1;
+            border-left-color: var(--color-primary);
+            transform: translateX(2px);
+        }
+        .theme-list-item.active {
+            background-color: var(--color-primary);
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-weight: 700;
+            border-left-color: var(--color-accent);
         }
         
-        /* Badges de thème cliquables à l'intérieur des cartes */
+        /* Badges de thème dans les cartes */
         .card-theme-badge {
             background-color: #e9f5e1;
             color: var(--color-primary);
@@ -62,84 +65,126 @@
             transition: all 0.2s ease;
         }
         .card-theme-badge:hover {
-            background-color: var(--color-primary);
-            color: white;
+            background-color: var(--color-accent);
+            color: var(--color-secondary);
             transform: scale(1.05);
         }
 
-        /* Animation subtile pour l'apparition des cartes */
+        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .proverb-card {
+        .proverb-card, .proverb-of-the-day {
             animation: fadeIn 0.5s ease-out forwards;
         }
+        .highlight {
+            transition: all 0.3s ease;
+            transform: scale(1.03);
+            box-shadow: 0 0 0 5px var(--color-accent), 0 10px 30px rgba(0,0,0,0.15); /* Mettre en évidence avec une bordure de couleur accent */
+        }
         
-        /* Style pour le toast de notification (copie) */
+        /* Toast de notification */
         #toast {
             position: fixed;
             bottom: -100px;
             left: 50%;
             transform: translateX(-50%);
-            transition: bottom 0.5s ease-in-out;
+            transition: bottom 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            opacity: 0;
             z-index: 1000;
         }
         #toast.show {
             bottom: 30px;
+            opacity: 1;
         }
 
-        /* Style pour la barre de défilement des thèmes - ADAPTÉ AU DÉFILEMENT HORIZONTAL */
-        .theme-scrollbar::-webkit-scrollbar {
-            height: 8px; /* Changement de width à height */
+        /* Bouton "Retour en haut" */
+        #back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+            transform: translateY(20px);
         }
-        .theme-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .theme-scrollbar::-webkit-scrollbar-thumb {
-            background-color: var(--color-accent);
-            border-radius: 10px;
-            border: 2px solid var(--color-bg);
+        #back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 sm:p-6 md:p-8">
 
-    <div class="max-w-5xl mx-auto">
-        <header class="text-center mb-8 p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-t-4 border-[var(--color-primary)]">
-            <h1 class="text-5xl font-serif font-bold text-[var(--color-secondary)] mb-2 flex justify-center items-center gap-4">
-                <svg class="w-12 h-12 text-[var(--color-primary)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,12.5c0,1-0.2,1.9-0.6,2.8l-0.2,0.4l-0.8,0.4C18,16,18,16,18,16c-0.1,0-0.3-0.1-0.4-0.1c-0.6-0.2-1.2-0.3-1.9-0.3c-0.8,0-1.6,0.2-2.3,0.5l-0.3,0.1v0.2c0,0.3,0,0.7,0,1c0,0.2,0,0.4,0,0.6v0.2l-0.5,0.2c-1,0.4-2,0.6-3.1,0.6c-1.2,0-2.3-0.2-3.4-0.7l-0.4-0.2v-0.2c0-0.3,0-0.5,0-0.8c0-0.3,0-0.6,0.1-0.9v-0.1l-0.4-0.2c-0.8-0.4-1.6-0.9-2.2-1.5L4.5,16L4.2,16C4.1,16,4,16,4,16c0,0,0,0,0,0c-0.5-0.1-1-0.3-1.4-0.5L2.1,15V14l0.4-0.2c0.5-0.3,1-0.7,1.5-1.1l0.3-0.3l-0.1-0.4c-0.1-0.5-0.2-1-0.2-1.5c0-0.5,0.1-1,0.2-1.5l0.1-0.4L4.2,8.4C3.7,7.8,3.2,7.3,2.6,6.8L2.3,6.5V5.8l0.5-0.3C3.5,5.2,4.1,4.9,4.8,4.7l0.4-0.1h0.2c0.2,0,0.5,0,0.7,0.1c0.3,0.1,0.6,0.2,0.9,0.4l0.2,0.1l0.3-0.2c0.4-0.3,0.8-0.5,1.2-0.7L9,4.1l0.2-0.4C9.5,3.3,9.8,2.9,10.2,2.5c0,0,0,0,0,0c0.1-0.1,0.2-0.2,0.3-0.4c0.4-0.5,0.8-1,1.3-1.3l0.2-0.1h0.7l0.3,0.2c0.3,0.2,0.7,0.5,1,0.8l0.3,0.3l0.4-0.1c0.4-0.1,0.8-0.2,1.2-0.2c0.5,0,1,0.1,1.5,0.2l0.4,0.1V3l-0.2,0.4c-0.2,0.4-0.3,0.8-0.5,1.2l-0.1,0.3l0.3,0.1c0.4,0.1,0.8,0.3,1.2,0.5L20,5.9l0.4,0.3V7l-0.4,0.2c-0.6,0.4-1.2,0.8-1.7,1.2L18,8.8l-0.2,0.4c-0.1,0.5-0.2,1-0.2,1.6C17.6,11.4,17.7,12,17.8,12.5z M19.5,12.5z"/></svg>
-                <span class="text-[var(--color-primary)] text-6xl font-normal">ⵣ</span> 
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-5xl md:text-7xl font-serif font-bold text-[var(--color-secondary)] mb-2 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
+                <span class="text-[var(--color-accent)] text-6xl font-normal">ⵟ</span> 
                 <span>Inzan n Teqbaylit</span>
-                <span class="text-[var(--color-primary)] text-6xl font-normal">ⵣ</span>
-                <svg class="w-12 h-12 text-[var(--color-primary)] transform -scale-x-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,12.5c0,1-0.2,1.9-0.6,2.8l-0.2,0.4l-0.8,0.4C18,16,18,16,18,16c-0.1,0-0.3-0.1-0.4-0.1c-0.6-0.2-1.2-0.3-1.9-0.3c-0.8,0-1.6,0.2-2.3,0.5l-0.3,0.1v0.2c0,0.3,0,0.7,0,1c0,0.2,0,0.4,0,0.6v0.2l-0.5,0.2c-1,0.4-2,0.6-3.1,0.6c-1.2,0-2.3-0.2-3.4-0.7l-0.4-0.2v-0.2c0-0.3,0-0.5,0-0.8c0-0.3,0-0.6,0.1-0.9v-0.1l-0.4-0.2c-0.8-0.4-1.6-0.9-2.2-1.5L4.5,16L4.2,16C4.1,16,4,16,4,16c0,0,0,0,0,0c-0.5-0.1-1-0.3-1.4-0.5L2.1,15V14l0.4-0.2c0.5-0.3,1-0.7,1.5-1.1l0.3-0.3l-0.1-0.4c-0.1-0.5-0.2-1-0.2-1.5c0-0.5,0.1-1,0.2-1.5l0.1-0.4L4.2,8.4C3.7,7.8,3.2,7.3,2.6,6.8L2.3,6.5V5.8l0.5-0.3C3.5,5.2,4.1,4.9,4.8,4.7l0.4-0.1h0.2c0.2,0,0.5,0,0.7,0.1c0.3,0.1,0.6,0.2,0.9,0.4l0.2,0.1l0.3-0.2c0.4-0.3,0.8-0.5,1.2-0.7L9,4.1l0.2-0.4C9.5,3.3,9.8,2.9,10.2,2.5c0,0,0,0,0,0c0.1-0.1,0.2-0.2,0.3-0.4c0.4-0.5,0.8-1,1.3-1.3l0.2-0.1h0.7l0.3,0.2c0.3,0.2,0.7,0.5,1,0.8l0.3,0.3l0.4-0.1c0.4-0.1,0.8-0.2,1.2-0.2c0.5,0,1,0.1,1.5,0.2l0.4,0.1V3l-0.2,0.4c-0.2,0.4-0.3,0.8-0.5,1.2l-0.1,0.3l0.3,0.1c0.4,0.1,0.8,0.3,1.2,0.5L20,5.9l0.4,0.3V7l-0.4,0.2c-0.6,0.4-1.2,0.8-1.7,1.2L18,8.8l-0.2,0.4c-0.1,0.5-0.2,1-0.2,1.6C17.6,11.4,17.7,12,17.8,12.5z M19.5,12.5z"/></svg>
+                <span class="text-[var(--color-accent)] text-6xl font-normal">ⵣ</span>
             </h1>
-            <p class="text-xl text-[var(--color-text)] font-light">Trésors de la Sagesse Kabyle récoltés par Aomar SIDER</p>
+            <p class="text-xl text-[var(--color-text)] font-light mt-2">Trésors de la Sagesse Kabyle</p>
         </header>
 
-        <div class="mb-8 p-6 bg-white/80 backdrop-blur-sm rounded-lg shadow-md sticky top-4 z-50">
-            <input type="text" id="search-input" placeholder="Rechercher par mot-clé (kabyle, français, thème)..."
-                   class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-[var(--color-primary)] focus:ring focus:ring-[var(--color-primary)]/50 transition-colors duration-200 text-lg mb-4">
-            
-            <div id="theme-filters" class="theme-scrollbar p-2 flex gap-2 overflow-x-auto whitespace-nowrap justify-start">
+        <section id="proverb-of-the-day-section" class="mb-12" aria-labelledby="proverb-of-the-day-title">
+            <h2 id="proverb-of-the-day-title" class="text-3xl font-serif text-[var(--color-primary)] mb-5 text-center font-semibold">Proverbe du Jour 💡</h2>
+            <div id="proverb-of-the-day-card" class="proverb-of-the-day max-w-3xl mx-auto border-t-8 border-[var(--color-accent)] bg-white/95 p-6 rounded-xl shadow-2xl relative transition-all duration-500">
                 </div>
+        </section>
+
+        <div class="flex flex-col lg:flex-row lg:gap-8">
+
+            <aside class="w-full lg:w-1/3 xl:w-1/4 order-1 lg:order-2 mb-8 lg:mb-0">
+                <div class="lg:sticky lg:top-8">
+                    <h3 class="text-2xl font-serif text-[var(--color-primary)] mb-4 text-center lg:text-left font-medium">Filtrer par Thèmes</h3>
+                    <nav aria-label="Filtres de thèmes Kabyles" class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 max-h-[60vh] overflow-y-auto border border-gray-100">
+                        <div id="theme-list-container">
+                            </div>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="w-full lg:w-2/3 xl:w-3/4 order-2 lg:order-1">
+                <div id="search-filter-bar" class="mb-8 p-4 bg-white/70 backdrop-blur-md rounded-xl shadow-lg sticky top-0 z-10 border border-gray-100">
+                    <div class="flex flex-col sm:flex-row gap-4 items-stretch">
+                        <input type="text" id="search-input" placeholder="Rechercher un proverbe (Kabyle ou Français)..."
+                               aria-label="Champ de recherche de proverbe"
+                               class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/30 transition duration-200 text-lg shadow-inner">
+                        <button id="random-btn" aria-label="Afficher un proverbe aléatoire" class="w-full sm:w-auto px-5 py-3 bg-[var(--color-accent)] text-[var(--color-secondary)] font-semibold rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 shadow-md transform hover:scale-[1.02]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                            <span>Hasard</span>
+                        </button>
+                    </div>
+                </div>
+
+                <main id="results-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    </main>
+
+                <p id="no-results" class="text-center text-2xl text-gray-500 mt-12 hidden font-serif p-4 border border-dashed rounded-lg">
+                    😔 Aucun proverbe ne correspond à votre recherche ou filtre.
+                </p>
+            </div>
+
         </div>
-
-        <main id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </main>
-
-        <p id="no-results" class="text-center text-2xl text-gray-500 mt-12 hidden font-serif">
-            Aucun proverbe ne correspond à votre recherche.
-        </p>
-
     </div>
     
-    <div id="toast" class="bg-green-600 text-white py-2 px-5 rounded-full shadow-lg">
-        <p>Texte copié dans le presse-papiers !</p>
+    <div id="toast" class="bg-green-700 text-white py-2 px-5 rounded-full shadow-xl">
+        <p>✅ Proverbe copié dans le presse-papiers !</p>
     </div>
 
+    <button id="back-to-top" title="Retour en haut" aria-label="Retourner en haut de la page" class="p-3 bg-[var(--color-secondary)] text-white rounded-full shadow-xl hover:bg-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[var(--color-primary)] transition-all">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+    </button>
+    
+    <footer class="text-center mt-16 py-6 border-t-2 border-gray-300">
+        <p class="text-gray-600 font-medium">Une collection de la sagesse populaire kabyle.</p>
+        <p class="text-sm text-gray-500 mt-1">Données initiales récoltées par Aomar SIDER.</p>
+    </footer>
+
     <script>
-        // Tableau de données des proverbes kabyles
+        // Tableau de données des proverbes
         const proverbsData = [
             {kabyle: "Yerẓa tamgarḍt", francais: "C’est le déclin", theme: "Déclin, Fléchissement, Abdication"},
             {kabyle: "Mi tɛedda lɛid, tezluḍ ufrik", francais: "Hors contexte", theme: "Inopportunité, Absurdité"},
@@ -195,7 +240,7 @@
             {kabyle: "D aqlaε n lebṣel", francais: "C’est le déracinement", theme: "Déracinement"},
             {kabyle: "Ad ak-d-ḥkuɣ tamacahut n tecraḍ-iw a lmeṣbaḥ?", francais: "Chandelier, je te raconte l’histoire de mon tatouage ?", theme: "Dérobade, Simulation"},
             {kabyle: "Taruẓi ujeqduṛ deg uɣud", francais: "C’est une fin malheureuse", theme: "Désillusion, Fiasco"},
-            {kabyle: "À quoi sert une bonne récolte si la maison est infestée de charançons ?", francais: ",", theme: "Gaspillage, Détournement"},
+            {kabyle: "À quoi sert une bonne récolte si la maison est infestée de charançons ?", francais: "À rien", theme: "Gaspillage, Détournement"},
             {kabyle: "Ma yebɣa Ṛebbi ad d-yefk, yessen axxam", francais: "Si Dieu veut me nantir, il connaît ma maison", theme: "Prédestinée"},
             {kabyle: "Tirezzaf ɣer lehl-im i d lehem-im", francais: "Ta visite familiale causera ton malheur", theme: "Dévoiement, Transgression"},
             {kabyle: "Leḥkem n Bubriṭ", francais: "C’est le pouvoir de Beauprêtre", theme: "Totalitarisme, Dictature"},
@@ -287,7 +332,7 @@
             {kabyle: "Brant snat n tlawin, tixsi mazal-itt di ssuq", francais: "Deux femmes sont répudiées alors que la brebis est encore en marchandage", theme: "Versatilité, Rétractation"},
             {kabyle: "Ma d afrux, ad afgeɣ; ma d tamellalt, ad rẓeɣ", francais: "Oiseau, je m’envole ; œuf, je me brise", theme: "Risque, Tentative"},
             {kabyle: "Wi yebɣan ad yidir, yemmet", francais: "Qui veut survivre, fait le mort", theme: "Ruse, Simulation"},
-            {kabyle: "Afus iεemden i wurɣu, yerɣ meqqar i wayen yelhan", francais: "La main qui accepte la brûlure, qu’elle se brûle pour le meilleur", theme: "Sacrifice"}
+            {kabyle: "Afus iɛemden i wurɣu, yerɣ meqqar i wayen yelhan", francais: "La main qui accepte la brûlure, qu’elle se brûle pour le meilleur", theme: "Sacrifice"}
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -295,154 +340,252 @@
             const searchInput = document.getElementById('search-input');
             const resultsContainer = document.getElementById('results-container');
             const noResults = document.getElementById('no-results');
-            const themeFiltersContainer = document.getElementById('theme-filters');
             const toast = document.getElementById('toast');
+            const proverbOfTheDayCard = document.getElementById('proverb-of-the-day-card');
+            const randomBtn = document.getElementById('random-btn');
+            const backToTopBtn = document.getElementById('back-to-top');
+            const themeListContainer = document.getElementById('theme-list-container');
+            const allThemeBtn = document.querySelector('.theme-list-item[data-theme="Tous"]');
 
             let activeTheme = 'Tous';
-
-            // Fonction pour normaliser le texte (supprimer les accents, mettre en minuscule)
+            
+            // Fonction pour normaliser le texte (minuscules, accents retirés)
             const normalizeText = (text) => {
                 if (typeof text !== 'string') return '';
-                return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                // Supprime les accents et met en minuscules
+                return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
             };
 
-            // Fonction pour afficher la notification "Toast"
-            const showToast = () => {
-                toast.classList.add('show');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 2000);
-            };
-            
-            // Fonction pour copier du texte dans le presse-papiers
-            const copyToClipboard = (text) => {
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
+            // Fonction de copie moderne avec fallback
+            const copyToClipboard = async (text) => {
                 try {
-                    document.execCommand('copy');
+                    await navigator.clipboard.writeText(text);
                     showToast();
                 } catch (err) {
-                    console.error('Impossible de copier le texte', err);
+                    // Fallback pour les anciens navigateurs ou contextes non sécurisés
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed'; // Évite le défilement
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast();
+                    } catch (e) {
+                        console.error('Impossible de copier', e);
+                    }
+                    document.body.removeChild(textArea);
                 }
-                document.body.removeChild(textArea);
             };
 
-            // Affichage des proverbes
-            const renderProverbs = (proverbs) => {
-                resultsContainer.innerHTML = '';
-                if (proverbs.length === 0) {
-                    noResults.classList.remove('hidden');
-                    return;
-                }
-                noResults.classList.add('hidden');
+            // Fonction pour afficher le toast
+            const showToast = () => {
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            };
+            
+            // Fonction pour créer le HTML d'une carte de proverbe
+            const createProverbCardHTML = (proverb, isDaily = false) => {
+                // Utilise la fonction de nettoyage et capitalisation pour les badges
+                const themes = proverb.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(t => t.length > 0);
+                
+                const themesHtml = themes.map(theme => {
+                    const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase();
+                    // Utilise normalizeText pour l'attribut data-theme afin de garantir une correspondance
+                    return `<button class="card-theme-badge px-2 py-1 rounded-full text-xs font-semibold" data-theme="${normalizeText(capitalizedTheme)}">${capitalizedTheme}</button>`;
+                }).join('');
 
-                proverbs.forEach(proverb => {
-                    const card = document.createElement('div');
-                    card.className = 'proverb-card bg-white/90 p-5 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col border-l-4 border-[var(--color-accent)]';
-                    
-                    const themesHtml = proverb.theme.split(/[,/]/).map(t => {
-                        const theme = t.trim().replace(/[()]/g, '');
-                        if (!theme) return '';
-                        const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase();
-                        return `<button class="card-theme-badge px-2 py-1 rounded-full text-xs font-semibold" data-theme="${capitalizedTheme}">${capitalizedTheme}</button>`;
-                    }).join('');
+                const cardClasses = isDaily 
+                    ? 'bg-white/95 p-6 rounded-xl shadow-2xl border-t-8 border-[var(--color-accent)] relative transition-all duration-500' 
+                    : 'proverb-card bg-white/90 p-5 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col border-l-4 border-[var(--color-primary)]';
 
-                    card.innerHTML = `
+                return `
+                    <div class="${cardClasses}">
                         <div class="flex-grow">
-                            <p class="text-xl font-serif font-bold text-[var(--color-primary)] mb-2 italic">
+                            <p class="text-xl font-serif font-bold text-[var(--color-secondary)] mb-2 italic leading-relaxed">
                                 « ${proverb.kabyle} »
                             </p>
-                            <p class="text-gray-600 text-lg mb-4 border-b pb-3">
+                            <p class="text-gray-700 text-lg mb-4 border-b pb-3 font-light">
                                 — ${proverb.francais}
                             </p>
-                            <div class="flex flex-wrap gap-2 items-center">
+                            <div class="flex flex-wrap gap-2 items-center min-h-[30px]">
                                 ${themesHtml}
                             </div>
                         </div>
                         <div class="mt-4 pt-3 border-t border-gray-200 text-right">
-                           <button class="copy-btn text-gray-400 hover:text-[var(--color-secondary)] transition-colors" title="Copier le proverbe" aria-label="Copier le proverbe">
+                           <button class="copy-btn text-gray-400 hover:text-[var(--color-primary)] transition-colors" title="Copier le proverbe" aria-label="Copier le proverbe">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                            </button>
                         </div>
-                    `;
-                    
-                    card.querySelector('.copy-btn').addEventListener('click', () => {
-                        const textToCopy = `"${proverb.kabyle}"\n— ${proverb.francais}`;
+                    </div>
+                `;
+            };
+
+            // Affichage du proverbe du jour
+            const displayProverbOfTheDay = () => {
+                const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+                const proverbIndex = dayOfYear % proverbsData.length;
+                const proverb = {...proverbsData[proverbIndex], originalIndex: proverbIndex}; // Ajout de l'index pour la gestion des événements
+                proverbOfTheDayCard.innerHTML = createProverbCardHTML(proverb, true);
+                addCardEventListeners(proverbOfTheDayCard, proverb);
+            };
+
+            // Ajout des écouteurs d'événements à une carte (copie et filtre par badge)
+            const addCardEventListeners = (cardElement, proverb) => {
+                const copyButton = cardElement.querySelector('.copy-btn');
+                if (copyButton) {
+                    copyButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const textToCopy = `« ${proverb.kabyle} »\n— ${proverb.francais}`;
                         copyToClipboard(textToCopy);
                     });
+                }
 
-                    card.querySelectorAll('.card-theme-badge').forEach(badge => {
-                        badge.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const themeToFilter = badge.dataset.theme;
-                            const mainFilterButton = document.querySelector(`.theme-btn[data-theme="${themeToFilter}"]`);
-                            if (mainFilterButton) {
-                                mainFilterButton.click();
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }
-                        });
+                cardElement.querySelectorAll('.card-theme-badge').forEach(badge => {
+                    badge.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const themeToFilterNormalized = badge.dataset.theme;
+                        
+                        // Trouve le bouton de filtre principal correspondant
+                        const mainFilterButton = document.querySelector(`.theme-list-item[data-theme="${themeToFilterNormalized}"]`);
+                        if (mainFilterButton) {
+                            // Simule le clic sur le bouton de la sidebar
+                            mainFilterButton.click();
+                            // Défilement vers la barre de recherche/filtre pour l'UX
+                            document.getElementById('search-filter-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
                     });
-                    
-                    resultsContainer.appendChild(card);
                 });
             };
 
-            // Mise à jour de l'affichage en fonction des filtres
-            const updateDisplay = () => {
-                const query = normalizeText(searchInput.value);
+            // Affichage des proverbes filtrés
+            const renderProverbs = (filteredProverbs) => {
+                resultsContainer.innerHTML = '';
+                noResults.classList.toggle('hidden', filteredProverbs.length > 0);
 
-                // Défilement automatique vers le début si on filtre par thème pour garantir la visibilité du premier proverbe
-                if (activeTheme !== 'Tous' && query === '') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (filteredProverbs.length > 0) {
+                    filteredProverbs.forEach((proverb) => {
+                        const cardWrapper = document.createElement('div');
+                        // Utilise l'index original pour faciliter la fonction aléatoire
+                        cardWrapper.id = `proverb-${proverb.originalIndex}`; 
+                        cardWrapper.innerHTML = createProverbCardHTML(proverb);
+                        resultsContainer.appendChild(cardWrapper);
+                        addCardEventListeners(cardWrapper, proverb);
+                    });
                 }
+            };
 
-                const filteredProverbs = proverbsData.filter(proverb => {
-                    const themeMatch = activeTheme === 'Tous' || normalizeText(proverb.theme).includes(normalizeText(activeTheme));
+            // Mise à jour de l'affichage (filtre et recherche)
+            const updateDisplay = () => {
+                const proverbsToRender = proverbsData.map((proverb, index) => ({...proverb, originalIndex: index}));
+                
+                const filteredProverbs = proverbsToRender.filter(proverb => {
+                    const normalizedActiveTheme = normalizeText(activeTheme);
+                    // Le proverbe correspond si 'Tous' est actif, ou si le thème normalisé du proverbe inclut le thème actif normalisé
+                    const themeMatch = activeTheme === 'Tous' || normalizeText(proverb.theme).includes(normalizedActiveTheme);
+                    
+                    const query = normalizeText(searchInput.value);
                     const queryMatch = !query || 
                                        normalizeText(proverb.kabyle).includes(query) || 
                                        normalizeText(proverb.francais).includes(query) ||
                                        normalizeText(proverb.theme).includes(query);
                     return themeMatch && queryMatch;
                 });
-                
                 renderProverbs(filteredProverbs);
             };
 
-            // Création et affichage des boutons de thèmes
+            // Création des filtres par thèmes
             const renderThemeFilters = () => {
                 const themes = new Set();
                 proverbsData.forEach(p => {
                     p.theme.split(/[,/]/).forEach(t => {
                         const theme = t.trim().replace(/[()]/g, '');
                         if (theme) {
-                            themes.add(theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase());
+                            // Stocke la version normalisée pour la correspondance et la version capitalisée pour l'affichage
+                            const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase();
+                            themes.add({ display: capitalizedTheme, normalized: normalizeText(capitalizedTheme) });
                         }
                     });
                 });
                 
-                const sortedThemes = ['Tous', ...Array.from(themes).sort()];
-
-                sortedThemes.forEach(theme => {
-                    const button = document.createElement('button');
-                    button.textContent = theme;
-                    button.dataset.theme = theme;
-                    button.className = `theme-btn px-4 py-1 rounded-full text-sm font-semibold ${theme === 'Tous' ? 'active' : ''}`;
-                    button.addEventListener('click', () => {
-                        activeTheme = theme;
-                        document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
-                        button.classList.add('active');
+                // Convertit le Set en Array, enlève les doublons basés sur 'normalized', et trie par affichage
+                const uniqueThemes = Array.from(themes).reduce((acc, curr) => {
+                    if (!acc.find(item => item.normalized === curr.normalized)) {
+                        acc.push(curr);
+                    }
+                    return acc;
+                }, []).sort((a, b) => a.display.localeCompare(b.display));
+                
+                // Ajoute l'option "Tous" en premier
+                const sortedThemes = [{ display: 'Tous', normalized: 'tous' }, ...uniqueThemes];
+                
+                themeListContainer.innerHTML = '';
+                sortedThemes.forEach(themeObj => {
+                    const item = document.createElement('a');
+                    item.textContent = themeObj.display;
+                    item.href = "#";
+                    item.dataset.theme = themeObj.normalized;
+                    item.className = `theme-list-item ${themeObj.normalized === normalizeText(activeTheme) ? 'active' : ''}`;
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        activeTheme = themeObj.display; // Stocke la version display pour l'état interne
+                        searchInput.value = ''; // Réinitialise la recherche texte en cas de changement de thème
+                        document.querySelectorAll('.theme-list-item').forEach(btn => btn.classList.remove('active'));
+                        item.classList.add('active');
                         updateDisplay();
                     });
-                    themeFiltersContainer.appendChild(button);
+                    themeListContainer.appendChild(item);
                 });
             };
             
-            // Initialisation de l'application
+            // Fonction pour afficher un proverbe au hasard
+            const showRandomProverb = () => {
+                const originalIndex = Math.floor(Math.random() * proverbsData.length);
+                
+                // 1. Réinitialiser les filtres
+                searchInput.value = '';
+                if(activeTheme !== 'Tous') {
+                    const tousButton = document.querySelector('.theme-list-item[data-theme="tous"]');
+                    if(tousButton) {
+                        tousButton.click(); // Clic pour mettre à jour l'état et l'affichage
+                    }
+                } else {
+                    updateDisplay(); // Rafraîchit l'affichage s'il était déjà sur 'Tous'
+                }
+                
+                // 2. Mettre en surbrillance et faire défiler vers la carte aléatoire
+                setTimeout(() => {
+                    const cardWrapper = document.getElementById(`proverb-${originalIndex}`);
+                    if (cardWrapper) {
+                        cardWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const card = cardWrapper.firstElementChild;
+                        card.classList.add('highlight');
+                        
+                        // Retire la surbrillance après un délai
+                        setTimeout(() => {
+                            card.classList.remove('highlight');
+                        }, 2500);
+                    }
+                }, 100); // Petit délai pour laisser le temps à updateDisplay de se terminer
+            };
+
+            // Gestion du bouton "Retour en haut"
+            const toggleBackToTopButton = () => {
+                 backToTopBtn.classList.toggle('visible', window.scrollY > 300);
+            }
+            window.addEventListener('scroll', toggleBackToTopButton);
+            backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+            // Initialisation
+            // Pré-traitement pour assurer que tous les proverbes ont l'index original
+            proverbsData.forEach((p, i) => p.originalIndex = i);
+
+            displayProverbOfTheDay();
             renderThemeFilters();
             updateDisplay();
             searchInput.addEventListener('input', updateDisplay);
+            randomBtn.addEventListener('click', showRandomProverb);
         });
     </script>
 </body>
