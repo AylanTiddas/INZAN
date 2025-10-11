@@ -85,6 +85,10 @@
             from { opacity: 0; transform: translateY(10px); } 
             to { opacity: 1; transform: translateY(0); } 
         }
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
         .fade-in { 
             animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
@@ -122,9 +126,9 @@
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Barre de défilement personnalisée */
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; border: 2px solid transparent; background-clip: content-box;}
         html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #4B5563; }
         
         /* Styles actifs pour la navigation, plus visibles */
@@ -182,20 +186,39 @@
         #modal-content :focus-visible {
             border-radius: 0.125rem;
         }
+
+        /* Styles pour l'écran de lancement */
+        #splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #splash-logo {
+            animation: zoomIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 pb-32 sm:pb-8">
+    
+    <div id="splash-screen" class="fixed inset-0 bg-[var(--color-bg)] z-[200] flex flex-col items-center justify-center transition-opacity duration-700 ease-out">
+        <div id="splash-logo" class="opacity-0">
+            <svg width="100" height="100" viewBox="0 0 100 100" class="text-[var(--color-accent)]">
+                <text x="50" y="85" font-size="90" text-anchor="middle" fill="currentColor">ⵣ</text>
+            </svg>
+        </div>
+        <p class="text-2xl font-serif font-bold text-[var(--color-heading)] mt-4">Inzan n Teqbaylit</p>
+    </div>
+
     <div class="max-w-7xl mx-auto">
         
-        <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
-            <button id="theme-toggle" aria-label="Changer de thème" class="p-2 rounded-full bg-[var(--color-bg-card)] text-[var(--color-text)] shadow-md hover:scale-110 transition-transform">
-                <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            </button>
-        </div>
+        <header class="relative text-center mb-8 md:mb-12">
+            <div class="absolute top-0 right-0 z-50">
+                <button id="theme-toggle" aria-label="Changer de thème" class="p-2 rounded-full bg-[var(--color-bg-card)] text-[var(--color-text)] shadow-md hover:scale-110 transition-transform">
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </button>
+            </div>
 
-        <header class="text-center mb-8 md:mb-12">
-            <h1 class="text-4xl md:text-6xl font-serif font-bold text-[var(--color-heading)] mb-2 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
+            <h1 class="text-4xl md:text-6xl font-serif font-bold text-[var(--color-heading)] mb-2 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 pt-4">
                 <svg width="40" height="40" viewBox="0 0 100 100" class="text-[var(--color-accent)] hidden md:inline-block"><text x="50" y="85" font-size="90" text-anchor="middle" fill="currentColor">ⵟ</text></svg>
                 <span>Inzan n Teqbaylit</span>
                 <svg width="40" height="40" viewBox="0 0 100 100" class="text-[var(--color-accent)] hidden md:inline-block"><text x="50" y="85" font-size="90" text-anchor="middle" fill="currentColor">ⵣ</text></svg>
@@ -232,7 +255,7 @@
             <section id="accueil-tab" class="tab-content" aria-labelledby="proverb-of-the-day-title">
                 <div class="max-w-4xl mx-auto mb-10 text-center p-6 bg-[var(--color-bg-card)]/70 rounded-xl shadow-inner border border-[var(--color-border)]">
                     <p class="text-lg text-[var(--color-secondary)] italic font-light">
-                        Comme un médicament, le proverbe doit être utilisé à bon escient. Pour ce, il ne suffit pas de le connaître, il faut surtout le comprendre. 
+                        Comme un médicament, le proverbe doit être utilisé à bon escient. 
                         <span class="block mt-2 font-medium text-[var(--color-primary)]">Anzi am ddwa, ilaq ad t-yesseqdec umdan akken iwulem.</span>
                     </p>
                 </div>
@@ -258,16 +281,16 @@
 
                 <footer class="text-center mt-16 py-6 border-t-2 border-[var(--color-border)]">
                     <p class="text-[var(--color-text-light)] font-medium">Une collection de la sagesse populaire kabyle.</p>
-                    <p class="text-sm text-[var(--color-text-light)] mt-1">Données initiales récoltées par Aomar SIDER. <button id="about-btn" class="text-[var(--color-primary)] underline">En savoir plus</button>.</p>
+                    <p class="text-sm text-[var(--color-text-light)] mt-1">Application développée par TAMAZIRT Boussad. <button id="about-btn" class="text-[var(--color-primary)] underline">En savoir plus</button>.</p>
                 </footer>
             </section>
 
             <section id="explorer-tab" class="tab-content" aria-labelledby="explorer-title">
-                 <div class="sticky top-4 z-20">
-                     <div class="mb-4 p-4 bg-[var(--color-bg-card)]/80 backdrop-blur-md rounded-xl shadow-lg border border-[var(--color-border)]">
+                 <div class="sticky top-4 z-20 bg-[var(--color-bg-card)]/80 backdrop-blur-md rounded-xl shadow-lg border border-[var(--color-border)] mb-6">
+                     <div class="p-4 space-y-4">
                         <div class="flex flex-col sm:flex-row gap-4 items-stretch">
                             <div class="search-wrapper flex-grow">
-                                <input type="text" id="search-input" placeholder="Rechercher un proverbe..." aria-label="Champ de recherche de proverbe" class="w-full p-3 pr-10 border-2 border-[var(--color-border)] rounded-lg focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30 transition duration-200 text-lg shadow-inner bg-[var(--color-bg-card)]">
+                                <input type="text" id="search-input" placeholder="Rechercher par mot-clé..." aria-label="Champ de recherche de proverbe" class="w-full p-3 pr-10 border-2 border-[var(--color-border)] rounded-lg focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/30 transition duration-200 text-lg shadow-inner bg-[var(--color-bg-card)]">
                                 <button class="clear-search-btn" aria-label="Vider la recherche">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
@@ -277,19 +300,23 @@
                                 <span>Aléatoire</span>
                             </button>
                         </div>
+                        <nav id="theme-filter-nav" aria-label="Filtres de thèmes Kabyles">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-sm font-bold text-[var(--color-heading)] flex-shrink-0">Thèmes:</h3>
+                                <div class="flex-grow overflow-x-auto custom-scrollbar">
+                                    <div id="theme-list-container" class="flex gap-2 py-1"></div>
+                                </div>
+                            </div>
+                        </nav>
                     </div>
                 </div>
-                <nav id="theme-filter-nav" aria-label="Filtres de thèmes Kabyles" class="mb-8 p-3 -mt-2">
-                    <div class="flex items-center gap-3">
-                        <h3 class="text-sm font-bold text-[var(--color-heading)] flex-shrink-0">Thèmes :</h3>
-                        <div class="flex-grow overflow-x-auto custom-scrollbar">
-                            <div id="theme-list-container" class="flex gap-2"></div>
-                        </div>
-                    </div>
-                </nav>
+                
+                <div id="results-feedback" class="mb-4 text-center text-[var(--color-text-light)] font-semibold min-h-[24px]"></div>
+
                 <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 min-h-[400px]"></div>
+                
                 <p id="no-results" class="text-center text-2xl text-[var(--color-text-light)] mt-12 hidden font-serif p-4 border border-dashed rounded-lg">
-                    😔 Aucun proverbe ne correspond à votre recherche.
+                    😔 Aucun proverbe ne correspond à votre recherche. <br> <span class="text-lg font-sans">Essayez de modifier vos mots-clés.</span>
                 </p>
             </section>
             
@@ -376,9 +403,11 @@
             // --- ÉLÉMENTS DU DOM & ÉTAT DE L'APPLICATION ---
             const dom = {
                 html: document.documentElement,
+                splashScreen: document.getElementById('splash-screen'),
                 searchInput: document.getElementById('search-input'),
                 clearSearchBtn: document.querySelector('.clear-search-btn'),
                 resultsContainer: document.getElementById('results-container'),
+                resultsFeedback: document.getElementById('results-feedback'),
                 favoritesContainer: document.getElementById('favorites-container'),
                 noResults: document.getElementById('no-results'),
                 noFavorites: document.getElementById('no-favorites'),
@@ -451,7 +480,9 @@
 
             const highlightText = (text, query) => {
                 if (!query) return text;
-                const regex = new RegExp(normalizeText(query).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                const normalizedQuery = normalizeText(query);
+                // Regex to find the query but not inside an HTML tag
+                const regex = new RegExp(`(?![^<]*>)${normalizedQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'gi');
                 return text.replace(regex, match => `<span class="search-highlight">${match}</span>`);
             };
             
@@ -505,17 +536,39 @@
             const updateDisplay = () => {
                 const query = dom.searchInput.value;
                 const normalizedQuery = normalizeText(query);
+                
                 const filteredProverbs = state.proverbs.filter(p => {
                     const themeMatch = state.activeTheme === 'tous' || normalizeText(p.theme).includes(state.activeTheme);
                     const queryMatch = !normalizedQuery || normalizeText(p.kabyle).includes(normalizedQuery) || normalizeText(p.francais).includes(normalizedQuery);
                     return themeMatch && queryMatch;
                 });
+                
                 renderProverbs(dom.resultsContainer, filteredProverbs, query, dom.noResults);
+
+                // Update results feedback
+                const count = filteredProverbs.length;
+                if (query || state.activeTheme !== 'tous') {
+                    dom.resultsFeedback.textContent = `${count} proverbe${count !== 1 ? 's' : ''} trouvé${count !== 1 ? 's' : ''}`;
+                } else {
+                    dom.resultsFeedback.textContent = `Affichage des ${state.proverbs.length} proverbes`;
+                }
             };
 
             const renderFavorites = () => {
                 const favoriteProverbs = state.proverbs.filter(p => state.favorites.has(p.id));
                 renderProverbs(dom.favoritesContainer, favoriteProverbs, '', dom.noFavorites);
+            };
+            
+            const resetThemeFilter = (update = true) => {
+                state.activeTheme = 'tous';
+                sessionStorage.setItem('inzan_theme_filter', 'tous');
+                dom.themeListContainer.querySelector('.active')?.classList.remove('active');
+                const tousButton = dom.themeListContainer.querySelector('[data-theme="tous"]');
+                if (tousButton) {
+                    tousButton.classList.add('active');
+                    tousButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+                if(update) updateDisplay();
             };
 
             const toggleFavorite = (id) => {
@@ -543,11 +596,7 @@
                 dom.tabContents.forEach(content => content.classList.toggle('active', content.id === tabId));
                 dom.navButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === tabId));
                 
-                if (tabId !== 'explorer-tab' && dom.searchInput.value) {
-                    dom.searchInput.value = '';
-                    updateDisplay();
-                }
-
+                if (tabId === 'explorer-tab') updateDisplay();
                 if (tabId === 'favoris-tab') renderFavorites();
                 if (tabId === 'quiz-tab' && !dom.quizContainer.innerHTML.includes('quiz-option')) startQuiz();
 
@@ -602,8 +651,9 @@
                 const GEMINI_API_KEY = "AIzaSyD3cGyEYYhNbFN6WlMKb5wjpdDqfR8RaN4"; 
                 
                 if (!GEMINI_API_KEY) {
-                    console.error("Clé API Gemini non configurée.");
-                    throw new Error("La clé API n'est pas configurée dans le code source.");
+                    const errorMessage = "La clé API n'est pas configurée dans le code source.";
+                    console.error(errorMessage);
+                    throw new Error(errorMessage);
                 }
 
                 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
@@ -689,7 +739,7 @@
                 }
             };
             
-            // --- NOUVELLE Logique du Quiz ---
+            // --- Logique du Quiz ---
             const startQuiz = () => {
                 const questionType = Math.random() < 0.5 ? 'meaning' : 'theme'; // 50% de chance pour chaque type
                 
@@ -785,7 +835,14 @@
 
             // --- GESTION DES ÉVÉNEMENTS ---
             const setupEventListeners = () => {
-                dom.searchInput.addEventListener('input', debounce(updateDisplay, 300));
+                dom.searchInput.addEventListener('input', debounce(() => {
+                    if (dom.searchInput.value) {
+                         // When user types, reset theme filter to 'tous' for a global search
+                        resetThemeFilter(false); // false to prevent double rendering
+                    }
+                    updateDisplay();
+                }, 300));
+                
                 dom.clearSearchBtn.addEventListener('click', () => {
                     dom.searchInput.value = '';
                     updateDisplay();
@@ -795,22 +852,25 @@
                 dom.goToExplorerBtn.addEventListener('click', () => setActiveTab('explorer-tab'));
                 
                 dom.randomBtn.addEventListener('click', () => {
-                    const visibleProverbs = Array.from(dom.resultsContainer.children)
-                        .map(c => state.proverbs.find(p => `proverb-${p.id}` === c.id))
-                        .filter(Boolean);
-
-                    if(visibleProverbs.length > 0){
-                        const randomProverb = visibleProverbs[Math.floor(Math.random() * visibleProverbs.length)];
-                        const card = document.getElementById(`proverb-${randomProverb.id}`);
-                        if (card) {
-                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            card.classList.add('highlight');
-                            setTimeout(() => card.classList.remove('highlight'), 2000);
-                        }
-                    } else {
-                         showToast("Aucun proverbe à afficher. Essayez une autre recherche.", true);
+                    if (dom.searchInput.value !== '') {
+                        dom.searchInput.value = '';
                     }
+                    resetThemeFilter(false);
+
+                    setTimeout(() => {
+                         updateDisplay(); // Ensure the display is up to date before selecting
+                        const visibleProverbs = Array.from(dom.resultsContainer.children);
+                        if (visibleProverbs.length > 0) {
+                            const randomCard = visibleProverbs[Math.floor(Math.random() * visibleProverbs.length)];
+                            randomCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            randomCard.classList.add('highlight');
+                            setTimeout(() => randomCard.classList.remove('highlight'), 2000);
+                        } else {
+                            showToast("Aucun proverbe à afficher.", true);
+                        }
+                    }, 100);
                 });
+
 
                 window.addEventListener('scroll', () => dom.backToTopBtn.classList.toggle('visible', window.scrollY > 300));
                 dom.backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -819,6 +879,11 @@
 
                 dom.themeListContainer.addEventListener('click', (e) => {
                     if (e.target.matches('.theme-pill-button')) {
+                        // Clear search input when a theme is manually selected
+                        if (dom.searchInput.value) {
+                            dom.searchInput.value = '';
+                        }
+                        
                         state.activeTheme = e.target.dataset.theme;
                         sessionStorage.setItem('inzan_theme_filter', state.activeTheme);
                         dom.themeListContainer.querySelector('.active')?.classList.remove('active');
@@ -880,6 +945,11 @@
 
             // --- INITIALISATION DE L'APPLICATION ---
             const initialize = () => {
+                // Gestion de l'écran de lancement
+                setTimeout(() => {
+                    dom.splashScreen.classList.add('hidden');
+                }, 1500);
+
                 const savedTheme = localStorage.getItem('inzan_theme') || 'light';
                 dom.html.classList.toggle('dark', savedTheme === 'dark');
                 dom.themeIcons.light.classList.toggle('hidden', savedTheme === 'dark');
@@ -901,7 +971,6 @@
 
                 setupEventListeners();
                 setActiveTab('accueil-tab'); 
-                updateDisplay();
             };
 
             initialize();
