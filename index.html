@@ -636,42 +636,32 @@
 
             const loadNextChunk = (reset = false) => {
                 if (!state.isCoreDataLoaded) return;
-
+                
                 const filteredProverbs = filterProverbs();
-
+                
                 if (reset) {
                     state.currentPage = 0;
                     state.displayedProverbs = [];
+                    dom.resultsContainer.innerHTML = '';
                     dom.initialLoadMessage.classList.add('hidden');
                 }
-
+                
                 const startIndex = state.currentPage * PROVERBS_PER_PAGE;
                 const endIndex = startIndex + PROVERBS_PER_PAGE;
                 const chunkToLoad = filteredProverbs.slice(startIndex, endIndex);
 
-                // Gérer l'état de l'affichage (message "aucun résultat" ou feedback)
-                if (reset) {
-                    dom.resultsContainer.innerHTML = ''; // Toujours vider le conteneur lors d'une nouvelle recherche/filtre
-                    if (chunkToLoad.length === 0) {
-                        dom.noResults.classList.remove('hidden');
-                        dom.resultsFeedback.textContent = '';
-                    } else {
-                        dom.noResults.classList.add('hidden');
-                    }
+                if (chunkToLoad.length === 0 && reset) {
+                    dom.noResults.classList.remove('hidden');
+                    dom.resultsFeedback.textContent = '';
+                } else {
+                    dom.noResults.classList.add('hidden');
+                    dom.resultsFeedback.textContent = `Affichage de ${Math.min(state.displayedProverbs.length + chunkToLoad.length, filteredProverbs.length)} sur ${filteredProverbs.length} proverbes`;
                 }
 
-                if (chunkToLoad.length > 0) {
-                    renderChunk(dom.resultsContainer, chunkToLoad, dom.searchInput.value, true); // Toujours ajouter, car le conteneur a été vidé si nécessaire
-                    state.displayedProverbs.push(...chunkToLoad);
-                    state.currentPage++;
-                }
+                renderChunk(dom.resultsContainer, chunkToLoad, dom.searchInput.value, true); // Always append after first load
                 
-                // Mettre à jour le feedback après avoir potentiellement ajouté des proverbes
-                if (filteredProverbs.length > 0) {
-                    dom.resultsFeedback.textContent = `Affichage de ${state.displayedProverbs.length} sur ${filteredProverbs.length} proverbes`;
-                }
-
-
+                state.displayedProverbs.push(...chunkToLoad);
+                state.currentPage++;
                 updateLoadMoreButton(filteredProverbs.length);
                 updateAvailableThemes();
             };
@@ -992,9 +982,9 @@
 
                     dom.initialLoadMessage.classList.add('hidden');
                     dom.loadMoreBtn.classList.add('hidden');
-                    dom.resultsContainer.innerHTML = ''; // Clear previous results before showing new random ones
 
                     if (sourceProverbs.length === 0) {
+                        dom.resultsContainer.innerHTML = '';
                         dom.noResults.classList.remove('hidden');
                         dom.resultsFeedback.textContent = 'Aucun proverbe ne correspond pour un tirage aléatoire.';
                         state.displayedProverbs = [];
@@ -1143,4 +1133,6 @@
     </script>
 </body>
 </html>
+
+
 
