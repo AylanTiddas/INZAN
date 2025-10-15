@@ -199,6 +199,22 @@
         /* Styles pour le bouton "Charger Plus" */
         #load-more-btn.hidden { display: none; }
         #load-more-btn.loading { opacity: 0.7; cursor: wait; }
+        
+        /* Correction de l'affichage des cartes vides */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--color-text-light);
+        }
+        
+        /* Amélioration de la performance des transitions */
+        .performance-optimized {
+            will-change: transform, opacity;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 pb-32 sm:pb-8">
@@ -256,7 +272,7 @@
         </nav>
 
         <main>
-            <section id="accueil-tab" class="tab-content" aria-labelledby="proverb-of-the-day-title">
+            <section id="accueil-tab" class="tab-content active" aria-labelledby="proverb-of-the-day-title">
                 <div class="max-w-4xl mx-auto mb-10 text-center p-6 bg-[var(--color-bg-card)]/70 rounded-xl shadow-inner border border-[var(--color-border)]">
                     <p class="text-lg text-[var(--color-secondary)] italic font-light">
                         Une Banque de <strong class="text-[var(--color-primary)] font-semibold">"plus de 2000 proverbes"</strong>
@@ -315,7 +331,8 @@
                                 <h3 class="text-sm font-bold text-[var(--color-heading)] flex-shrink-0">Thèmes:</h3>
                                 <div class="flex-grow overflow-x-auto custom-scrollbar">
                                     <div id="theme-list-container" class="flex gap-2 py-1">
-                                        </div>
+                                        <button class="theme-pill-button active flex-shrink-0 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white shadow-sm cursor-pointer font-medium text-sm" data-theme="tous">Tous</button>
+                                    </div>
                                 </div>
                             </div>
                         </nav>
@@ -345,7 +362,12 @@
             
             <section id="favoris-tab" class="tab-content" aria-labelledby="favoris-title">
                 <h2 id="favoris-title" class="text-3xl font-serif text-[var(--color-primary)] mb-5 text-center font-semibold">Mes Favoris ❤️</h2>
-                <div id="favorites-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 min-h-[400px]"></div>
+                <div id="favorites-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 min-h-[400px]">
+                    <div class="empty-state md:col-span-2 xl:col-span-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-[var(--color-text-light)] opacity-70 mb-4"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        <p class="text-lg text-[var(--color-text-light)]">Vous n'avez pas encore de proverbes favoris.</p>
+                    </div>
+                </div>
                 <div id="no-favorites" class="text-center text-xl text-[var(--color-text-light)] mt-12 hidden font-serif p-4">
                     <p>Vous n'avez pas encore de proverbes favoris.</p>
                     <button id="go-to-explorer-btn" class="mt-4 px-5 py-2 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:scale-[1.02] transition-transform">Explorer les proverbes</button>
@@ -405,7 +427,7 @@
         <p>Message</p>
     </div>
 
-    <button id="back-to-top" title="Retour en haut" aria-label="Retourner en haut de la page" class="fixed bottom-[100px] sm:bottom-10 right-5 p-3 bg-[var(--color-secondary)] text-white rounded-full shadow-xl hover:bg-[var(--color-primary)] focus:outline-none transition-all opacity-0 visibility-hidden transform-gpu translate-y-5 z-50">
+    <button id="back-to-top" title="Retour en haut" aria-label="Retourner en haut de la page" class="fixed bottom-[100px] sm:bottom-10 right-5 p-3 bg-[var(--color-secondary)] text-white rounded-full shadow-xl hover:bg-[var(--color-primary)] focus:outline-none transition-all opacity-0 invisible transform-gpu translate-y-5 z-50">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
     </button>
     
@@ -471,7 +493,8 @@
                 trapFocusHandler: null,
                 isCoreDataLoaded: false, // Vrai dès que le fetch est terminé
                 currentPage: 0,
-                displayedProverbs: []
+                displayedProverbs: [],
+                isLoading: false
             };
             
             // --- FONCTIONS UTILITAIRES ---
@@ -563,6 +586,18 @@
             };
             
             const renderChunk = (container, proverbs, query, append = true) => {
+                if (proverbs.length === 0) {
+                    if (!append) {
+                        container.innerHTML = `
+                            <div class="empty-state md:col-span-2 xl:col-span-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-[var(--color-text-light)] opacity-70 mb-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                                <p class="text-lg text-[var(--color-text-light)]">Aucun proverbe trouvé.</p>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+                
                 const chunkHtml = proverbs.map((p, i) => {
                     const cardHTML = createProverbCardHTML(p, false, query);
                     const wrapper = document.createElement('div');
@@ -580,11 +615,12 @@
             };
 
             const updateAvailableThemes = () => {
-                if (state.displayedProverbs.length === 0) {
-                     dom.themeListContainer.innerHTML = `<p class="text-sm text-[var(--color-text-light)]">Recherchez pour voir les thèmes.</p>`;
+                if (!state.isCoreDataLoaded || state.proverbs.length === 0) {
+                     dom.themeListContainer.innerHTML = `<button class="theme-pill-button active flex-shrink-0 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white shadow-sm cursor-pointer font-medium text-sm" data-theme="tous">Tous</button>`;
                      return;
                 }
-                const allThemesRaw = state.displayedProverbs.flatMap(p => p.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean));
+                
+                const allThemesRaw = state.proverbs.flatMap(p => p.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean));
                 const uniqueNormalizedThemes = [...new Map(allThemesRaw.map(t => [normalizeText(t), t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()])).entries()];
                 uniqueNormalizedThemes.sort((a, b) => a[1].localeCompare(b[1]));
 
@@ -613,12 +649,13 @@
             };
 
             const filterProverbs = () => {
-                if (!state.isCoreDataLoaded) return [];
+                if (!state.isCoreDataLoaded || state.proverbs.length === 0) return [];
 
                 const query = dom.searchInput.value;
                 const normalizedQuery = normalizeText(query);
                 
-                if (!normalizedQuery && state.activeTheme === 'tous') return [];
+                // Si pas de recherche et pas de filtre de thème, retourner tous les proverbes
+                if (!normalizedQuery && state.activeTheme === 'tous') return state.proverbs;
                 
                 const keywords = normalizedQuery.split(' ').filter(k => k.length > 0);
 
@@ -635,7 +672,9 @@
             };
 
             const loadNextChunk = (reset = false) => {
-                if (!state.isCoreDataLoaded) return;
+                if (!state.isCoreDataLoaded || state.isLoading) return;
+                
+                state.isLoading = true;
                 
                 const filteredProverbs = filterProverbs();
                 
@@ -658,12 +697,14 @@
                     dom.resultsFeedback.textContent = `Affichage de ${Math.min(state.displayedProverbs.length + chunkToLoad.length, filteredProverbs.length)} sur ${filteredProverbs.length} proverbes`;
                 }
 
-                renderChunk(dom.resultsContainer, chunkToLoad, dom.searchInput.value, true); // Always append after first load
+                renderChunk(dom.resultsContainer, chunkToLoad, dom.searchInput.value, true);
                 
                 state.displayedProverbs.push(...chunkToLoad);
                 state.currentPage++;
                 updateLoadMoreButton(filteredProverbs.length);
                 updateAvailableThemes();
+                
+                state.isLoading = false;
             };
 
             // --- FONCTIONS D'AFFICHAGE ET DE NAVIGATION ---
@@ -889,7 +930,7 @@
                 const correctThemes = proverb.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean);
                 const correctAnswer = correctThemes[Math.floor(Math.random() * correctThemes.length)];
 
-                const uniqueThemesForOptions = [...new Set(quizProverbs.flatMap(p => p.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean)))];
+                const uniqueThemesForOptions = [...new Set(quizProverbs.flatMap(p => p.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean))];
                 
                 let options = [correctAnswer];
                 while (options.length < 4 && options.length < uniqueThemesForOptions.length) {
@@ -969,7 +1010,7 @@
                 dom.loadMoreBtn.addEventListener('click', () => {
                     dom.loadMoreBtn.classList.add('loading');
                     loadNextChunk(false);
-                    dom.loadMoreBtn.classList.remove('loading');
+                    setTimeout(() => dom.loadMoreBtn.classList.remove('loading'), 300);
                 });
 
                 dom.goToExplorerBtn.addEventListener('click', () => setActiveTab('explorer-tab'));
@@ -1020,7 +1061,12 @@
                     dom.resultsFeedback.textContent = feedback;
                 });
 
-                window.addEventListener('scroll', () => dom.backToTopBtn.classList.toggle('visible', window.scrollY > 300));
+                window.addEventListener('scroll', () => {
+                    const isVisible = window.scrollY > 300;
+                    dom.backToTopBtn.classList.toggle('visible', isVisible);
+                    dom.backToTopBtn.classList.toggle('invisible', !isVisible);
+                });
+                
                 dom.backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
                 dom.navButtons.forEach(button => button.addEventListener('click', () => setActiveTab(button.dataset.tab)));
@@ -1056,8 +1102,15 @@
                          const themeToFilter = e.target.closest('.card-theme-badge').dataset.theme;
                          setActiveTab('explorer-tab');
                          setTimeout(() => {
-                            dom.searchInput.value = themeToFilter;
-                            resetThemeFilter(false);
+                            dom.searchInput.value = '';
+                            state.activeTheme = themeToFilter;
+                            sessionStorage.setItem('inzan_theme_filter', state.activeTheme);
+                            dom.themeListContainer.querySelector('.active')?.classList.remove('active');
+                            const themeButton = dom.themeListContainer.querySelector(`[data-theme="${themeToFilter}"]`);
+                            if (themeButton) {
+                                themeButton.classList.add('active');
+                                themeButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                            }
                             loadNextChunk(true);
                          }, 100);
                     }
@@ -1117,9 +1170,11 @@
                     })
                     .catch(error => {
                         console.error("Could not load proverbs:", error);
-                        const errorMessage = `<h1 class="text-2xl font-bold text-red-600">Erreur de chargement</h1>
+                        const errorMessage = `<div class="empty-state md:col-span-2 xl:col-span-3">
+                            <h1 class="text-2xl font-bold text-red-600">Erreur de chargement</h1>
                             <p class="text-red-500 mt-2">Impossible de charger la banque de proverbes (proverbs.json). <br> ${error.message}</p>
-                            <p class="mt-4 text-[var(--color-text-light)]">Veuillez vérifier que le fichier est bien présent et non corrompu.</p>`;
+                            <p class="mt-4 text-[var(--color-text-light)]">Veuillez vérifier que le fichier est bien présent et non corrompu.</p>
+                        </div>`;
                         dom.initialLoadMessage.innerHTML = errorMessage;
                         dom.proverbOfTheDayCard.innerHTML = `<p class="text-center text-red-500">Erreur de chargement.</p>`;
                         dom.themeListContainer.innerHTML = `<p class="text-center text-red-500 text-sm">Erreur.</p>`;
@@ -1133,6 +1188,3 @@
     </script>
 </body>
 </html>
-
-
-
