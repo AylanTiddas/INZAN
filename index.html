@@ -412,767 +412,809 @@
     <div id="modal-backdrop" class="fixed inset-0 bg-black/60 z-[100] opacity-0 pointer-events-none transition-opacity duration-300"></div>
     <div id="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-2xl max-h-[85vh] bg-[var(--color-bg-card)] rounded-lg shadow-2xl z-[101] opacity-0 scale-95 pointer-events-none transition-all duration-300 flex flex-col">
         <header class="flex-shrink-0 p-6 pb-4 pr-12 border-b border-[var(--color-border)]">
-            <h2 id="modal-title" class="text-2xl font-serif text-[var(--color-heading)] font-bold">Explication du Proverbe</h2>
-            <button id="modal-close-btn" aria-label="Fermer la fenêtre modale" class="absolute top-4 right-4 p-2 text-[var(--color-text-light)] hover:text-[var(--color-text)] transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
+            <h2 id="modal-title" class="text-2xl font-serif text-[var(--color-heading)]"></h2>
         </header>
-        <div id="modal-body" class="p-6 flex-grow overflow-y-auto custom-scrollbar">
-            </div>
-        <footer class="flex-shrink-0 p-4 border-t border-[var(--color-border)] flex justify-end">
-             <button id="modal-favorite-btn" class="favorite-btn action-btn text-[var(--color-text-light)] hover:text-pink-500 flex items-center gap-1 font-semibold px-4 py-2 rounded-lg" data-id="" aria-label="Ajouter/Retirer des favoris">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                <span id="modal-favorite-text">Ajouter aux favoris</span>
-            </button>
-        </footer>
+        <div id="modal-body" class="prose max-w-none text-[var(--color-text)] p-6 overflow-y-auto"></div>
+        <button id="modal-close-btn" aria-label="Fermer la modale" class="absolute top-4 right-4 text-gray-400 hover:text-[var(--color-heading)] transition-colors z-20 p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // --- Mappage DOM et Variables Globales ---
             const dom = {
-                // Navigations et structure
+                splashScreen: document.getElementById('splash-screen'),
+                themeToggle: document.getElementById('theme-toggle'),
+                themeIconLight: document.getElementById('theme-icon-light'),
+                themeIconDark: document.getElementById('theme-icon-dark'),
+                tabs: document.querySelectorAll('[data-tab]'),
+                navButtons: document.querySelectorAll('.nav-btn'),
                 accueilTab: document.getElementById('accueil-tab'),
                 explorerTab: document.getElementById('explorer-tab'),
                 favorisTab: document.getElementById('favoris-tab'),
                 aiSageTab: document.getElementById('ai-sage-tab'),
                 quizTab: document.getElementById('quiz-tab'),
-                navButtons: document.querySelectorAll('.nav-btn'),
-                mobileNav: document.getElementById('mobile-nav'),
-                desktopNav: document.getElementById('desktop-nav'),
-                
-                // Accueil
                 proverbOfTheDayCard: document.getElementById('proverb-of-the-day-card'),
-                
-                // Explorer
+                searchContainer: document.getElementById('search-container'),
                 searchInput: document.getElementById('search-input'),
                 randomBtn: document.getElementById('random-btn'),
                 themeListContainer: document.getElementById('theme-list-container'),
-                resultsFeedback: document.getElementById('results-feedback'),
                 resultsContainer: document.getElementById('results-container'),
+                resultsFeedback: document.getElementById('results-feedback'),
                 initialLoadMessage: document.getElementById('initial-load-message'),
-                noResults: document.getElementById('no-results'),
                 loadMoreBtn: document.getElementById('load-more-btn'),
-                clearSearchBtn: document.querySelector('.clear-search-btn'),
-                explorerTabBtn: document.querySelector('[data-tab="explorer-tab"]'),
-
-                // Favoris
+                noResults: document.getElementById('no-results'),
                 favoritesContainer: document.getElementById('favorites-container'),
                 noFavorites: document.getElementById('no-favorites'),
                 goToExplorerBtn: document.getElementById('go-to-explorer-btn'),
-
-                // AI Sage
                 aiContextInput: document.getElementById('ai-context-input'),
                 aiSuggestBtn: document.getElementById('ai-suggest-btn'),
                 aiResultFeedback: document.getElementById('ai-result-feedback'),
-
-                // Quiz
                 quizContainer: document.getElementById('quiz-container'),
-
-                // Modale
+                toast: document.getElementById('toast'),
+                backToTop: document.getElementById('back-to-top'),
                 modalBackdrop: document.getElementById('modal-backdrop'),
                 modalContent: document.getElementById('modal-content'),
-                modalCloseBtn: document.getElementById('modal-close-btn'),
                 modalTitle: document.getElementById('modal-title'),
                 modalBody: document.getElementById('modal-body'),
-                modalFavoriteBtn: document.getElementById('modal-favorite-btn'),
-                modalFavoriteText: document.getElementById('modal-favorite-text'),
-
-                // Général
-                themeToggle: document.getElementById('theme-toggle'),
-                toast: document.getElementById('toast'),
-                splashScreen: document.getElementById('splash-screen'),
-                backToTop: document.getElementById('back-to-top'),
+                modalCloseBtn: document.getElementById('modal-close-btn'),
                 aboutBtn: document.getElementById('about-btn'),
+                clearSearchBtn: document.querySelector('.clear-search-btn')
             };
 
-            let proverbs = [];
-            let favorites = JSON.parse(localStorage.getItem('kabyleProverbsFavorites') || '[]');
-            let currentQuiz = null;
-
-            // --- NOUVELLES VARIABLES GLOBALES POUR LA RECHERCHE ET LA PAGINATION ---
-            const PROVERBS_PER_PAGE = 50;
-            let filteredProverbs = [];
-            let currentDisplayCount = 0;
+            let allProverbs = [];
+            let currentProverbs = [];
+            let favorites = JSON.parse(localStorage.getItem('kabyle_proverbs_favorites')) || [];
+            let currentPage = 0;
+            const CHUNK_SIZE = 50;
+            let currentThemeFilter = '';
             let currentSearchTerm = '';
-            let currentTheme = null;
             let allThemes = [];
 
-            // --- FONCTIONS UTILITAIRES ---
-            
-            /**
-             * Normalise la chaîne de caractères (retire les accents et passe en minuscule)
-             * pour une recherche plus tolérante.
-             */
-            const normalizeString = (str) => {
-                if (!str) return '';
-                // Supprime les accents et passe en minuscule
-                return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            };
-            
-            /**
-             * Assure que la propriété 'theme' d'un proverbe est toujours un tableau.
-             * Fixe l'erreur (proverb.theme || []).map is not a function.
-             */
-            const getThemesAsArray = (proverb) => {
-                if (!proverb || !proverb.theme) return [];
-                if (Array.isArray(proverb.theme)) return proverb.theme;
-                // Si c'est une chaîne de caractères (potentiellement une erreur de données), la convertir en tableau
-                if (typeof proverb.theme === 'string') return [proverb.theme];
-                return [];
+            // --- Theme Toggle ---
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+            const applyTheme = (isDark) => {
+                document.documentElement.classList.toggle('dark', isDark);
+                dom.themeIconLight.classList.toggle('hidden', isDark);
+                dom.themeIconDark.classList.toggle('hidden', !isDark);
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
             };
 
-            /**
-             * Fonction de surlignage simple.
-             * Utilise une expression régulière pour une recherche insensible à la casse et globale.
-             */
+            const initialTheme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
+            applyTheme(initialTheme === 'dark');
+            prefersDark.addListener((e) => applyTheme(e.matches)); // Fallback listener
+
+            dom.themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                applyTheme(!isDark);
+            });
+
+            // --- Navigation / Tabs ---
+            const switchTab = (tabId) => {
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                // Show selected tab content
+                document.getElementById(tabId).classList.add('active');
+
+                // Deactivate all nav buttons
+                dom.navButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                // Activate the corresponding nav button
+                document.querySelectorAll(`[data-tab="${tabId}"]`).forEach(btn => {
+                    btn.classList.add('active');
+                });
+
+                // Special logic for tabs
+                if (tabId === 'explorer-tab') {
+                    handleExplorerTabOpen();
+                } else if (tabId === 'favoris-tab') {
+                    renderFavorites();
+                } else if (tabId === 'quiz-tab') {
+                    generateQuiz();
+                }
+            };
+
+            // Set initial tab
+            const initialTab = dom.accueilTab.id;
+            switchTab(initialTab);
+
+            dom.tabs.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchTab(e.currentTarget.dataset.tab);
+                });
+            });
+            
+            dom.goToExplorerBtn.addEventListener('click', () => switchTab('explorer-tab'));
+
+            // --- Utility Functions ---
+
+            // Simple debounce utility
+            const debounce = (func, delay) => {
+                let timeoutId;
+                return function(...args) {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => func.apply(this, args), delay);
+                };
+            };
+            
+            // Highlight utility for search results
             const highlightText = (text, term) => {
-                if (!term || term.length < 2) return text;
-                
-                // Échapper les caractères spéciaux pour l'utilisation dans une RegExp
-                const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                
-                // Utiliser une expression régulière insensible à la casse
-                const regex = new RegExp(`(${escapedTerm})`, 'gi');
-                
-                // Ne surligner que si le terme est trouvé (utile pour les thèmes)
-                if (regex.test(text)) {
-                    // Remplacer les correspondances par l'élément de surlignage
-                    return text.replace(regex, '<span class="search-highlight">$1</span>');
-                }
-                return text;
+                if (!term) return text;
+                const regex = new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+                return text.replace(regex, '<span class="search-highlight">$1</span>');
             };
 
-            /**
-             * Crée le HTML pour une carte de proverbe.
-             */
-            const createProverbCardHTML = (proverb, isDaily = false, highlightTerm = '') => {
-                const proverbText = highlightText(proverb.proverb, highlightTerm);
-                const translationText = highlightText(proverb.translation, highlightTerm);
-                
-                // Utiliser getThemesAsArray pour garantir que themes est un tableau
-                const themes = getThemesAsArray(proverb); 
-                
-                // Utiliser highlightText pour les thèmes si le terme recherché correspond à un thème
-                const themeBadges = themes.map(theme => {
-                    // On surligne le thème si le terme correspond
-                    const themeHighlighted = highlightText(theme, highlightTerm);
-                    // Utiliser l'original `theme` (non highlighté) pour `data-theme`
-                    return `<span class="card-theme-badge text-xs font-medium px-2 py-1 rounded-full bg-[var(--color-bg-alt)] hover:bg-[var(--color-accent)] text-[var(--color-text)] cursor-pointer select-none" data-theme="${theme.replace(/'/g, "\\'")}" title="Filtrer par ce thème">${themeHighlighted}</span>`;
-                }).join('');
-
-                const isFav = isFavorite(proverb.id);
-
-                return `<div class="proverb-card bg-[var(--color-bg-card)] p-5 rounded-xl shadow-lg border-t-4 border-[var(--color-primary)] flex flex-col justify-between h-full fade-in" data-id="${proverb.id}">
-                    <div>
-                        <p class="text-xl font-serif font-bold text-[var(--color-heading)] mb-3">${proverbText}</p>
-                        <p class="text-[var(--color-text)] mb-4 italic">"${translationText}"</p>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap gap-2 mb-4">${themeBadges}</div>
-                        <div class="flex justify-between items-center pt-3 border-t border-[var(--color-border)]">
-                            <button class="favorite-btn action-btn text-[var(--color-text-light)] hover:text-pink-500 flex items-center gap-1 ${isFav ? 'favorited' : ''}" data-id="${proverb.id}" aria-label="Ajouter aux favoris">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="${isFav ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                                <span class="text-sm hidden sm:inline">Favori</span>
-                            </button>
-                            <button class="action-btn text-[var(--color-primary)] hover:text-[var(--color-secondary)] flex items-center gap-1 font-semibold" data-id="${proverb.id}" data-action="explain" aria-label="Explication du proverbe">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-                                <span class="text-sm hidden sm:inline">Explication</span>
-                            </button>
-                        </div>
-                    </div>
-                    ${isDaily ? '<div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-[var(--color-accent)] text-white text-xs font-bold rounded-full shadow-lg">DU JOUR</div>' : ''}
-                </div>`;
-            };
-
-            const saveFavorites = () => {
-                localStorage.setItem('kabyleProverbsFavorites', JSON.stringify(favorites));
-                renderFavorites();
-            };
-
-            const isFavorite = (id) => favorites.includes(id);
-
-            const toggleFavorite = (id) => {
-                const index = favorites.indexOf(id);
-                if (index > -1) {
-                    favorites.splice(index, 1);
-                    showToast('Proverbe retiré des favoris.', 'info');
-                } else {
-                    favorites.push(id);
-                    showToast('Proverbe ajouté aux favoris !', 'success');
-                }
-                saveFavorites();
-            };
-
-            const showToast = (message, type = 'success') => {
-                dom.toast.querySelector('p').textContent = message;
-                dom.toast.className = 'fixed bottom-[-100px] left-1/2 -translate-x-1/2 py-2 px-5 rounded-full shadow-xl opacity-0 z-[1000] transition-all duration-500';
-                
-                let bgColor;
-                if (type === 'success') bgColor = 'bg-green-700';
-                else if (type === 'error') bgColor = 'bg-red-600';
-                else bgColor = 'bg-gray-700';
+            // Notification/Toast
+            const showToast = (message, isError = false) => {
+                dom.toast.textContent = message;
+                dom.toast.style.backgroundColor = isError ? '#dc2626' : 'var(--color-secondary)'; // red-600 vs primary
+                dom.toast.classList.remove('bottom-[-100px]', 'opacity-0');
+                dom.toast.classList.add('bottom-10', 'opacity-1');
 
                 setTimeout(() => {
-                    dom.toast.classList.add(bgColor, 'text-white', 'opacity-100');
-                    dom.toast.style.bottom = '3rem'; // Rendre visible
-
-                    setTimeout(() => {
-                        dom.toast.style.bottom = '-100px';
-                        dom.toast.classList.remove('opacity-100', bgColor);
-                    }, 3000);
-                }, 100);
+                    dom.toast.classList.remove('bottom-10', 'opacity-1');
+                    dom.toast.classList.add('bottom-[-100px]', 'opacity-0');
+                }, 3000);
             };
 
-            const renderProverbInModal = (proverb) => {
-                if (!proverb) return;
-                
-                const themes = getThemesAsArray(proverb); // Garantir tableau
-                const isFav = isFavorite(proverb.id);
-                
-                dom.modalTitle.textContent = proverb.proverb;
-                dom.modalBody.innerHTML = `
-                    <p class="text-lg text-[var(--color-text)] mb-6 italic font-medium">"${proverb.translation}"</p>
-                    <div class="prose">
-                        ${proverb.explanation ? `
-                            <h3 class="text-xl font-serif text-[var(--color-primary)] mb-2">Explication</h3>
-                            <p>${proverb.explanation}</p>
-                        ` : '<p class="text-[var(--color-text-light)]">Aucune explication détaillée disponible pour ce proverbe.</p>'}
-                        
-                        ${(themes.length > 0) ? `
-                            <h3 class="text-xl font-serif text-[var(--color-primary)] mb-2">Thèmes</h3>
-                            <p>${themes.join(', ')}</p>
-                        ` : ''}
-                    </div>
-                `;
-                
-                dom.modalFavoriteBtn.setAttribute('data-id', proverb.id);
-                dom.modalFavoriteBtn.classList.toggle('favorited', isFav);
-                dom.modalFavoriteBtn.querySelector('#modal-favorite-text').textContent = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
-
+            // --- Modal Handler ---
+            const openModal = (title, content) => {
+                dom.modalTitle.textContent = title;
+                dom.modalBody.innerHTML = content;
                 dom.modalBackdrop.classList.add('visible');
                 dom.modalContent.classList.add('visible');
-                document.body.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden'; // Prevent body scroll
+                dom.modalContent.focus();
             };
 
-            const hideModal = () => {
+            const closeModal = () => {
                 dom.modalBackdrop.classList.remove('visible');
                 dom.modalContent.classList.remove('visible');
                 document.body.style.overflow = '';
             };
 
-            // --- LOGIQUE DE RECHERCHE ET DE FILTRAGE (CORRIGÉE) ---
+            dom.modalCloseBtn.addEventListener('click', closeModal);
+            dom.modalBackdrop.addEventListener('click', closeModal);
+            dom.modalContent.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+
+
+            // --- Core HTML Generation ---
+
+            const createProverbCardHTML = (proverb, isDailyProverb = false, highlightTerm = '') => {
+                // Sécurité: Si le proverbe n'a pas de contenu principal
+                if (!proverb || !proverb.proverbe) {
+                    return '';
+                }
+
+                const isFavorite = favorites.includes(proverb.id);
+                const favClass = isFavorite ? 'favorited' : '';
+                
+                // CORRECTION DE L'ERREUR : Uncaught TypeError: Cannot read properties of undefined (reading 'split')
+                // On utilise `proverb.theme || ''` pour s'assurer que si `proverb.theme` est null ou undefined,
+                // on utilise une chaîne vide (`''`) sur laquelle `.split()` peut être appelé sans erreur.
+                const themesHTML = (proverb.theme || '')
+                    .split(',')
+                    .map(theme => {
+                        const cleanTheme = theme.trim();
+                        if (!cleanTheme) return '';
+                        
+                        const highlightedTheme = highlightTerm && cleanTheme.toLowerCase().includes(highlightTerm.toLowerCase()) 
+                            ? `<span class="search-highlight">${cleanTheme}</span>` 
+                            : cleanTheme;
+
+                        return `
+                            <button class="card-theme-badge text-xs font-medium px-3 py-1 bg-[var(--color-bg-alt)] text-[var(--color-secondary)] rounded-full hover:bg-[var(--color-primary)] hover:text-white transition-colors duration-200" data-theme="${cleanTheme}">
+                                ${highlightedTheme}
+                            </button>
+                        `;
+                    })
+                    .join('');
+
+                const explanationHTML = proverb.explication ? `
+                    <div class="mt-4 pt-4 border-t border-[var(--color-border)]">
+                        <h4 class="text-base font-serif font-bold text-[var(--color-primary)] mb-2">Explication:</h4>
+                        <p class="text-sm text-[var(--color-text)] leading-relaxed">${highlightText(proverb.explication, highlightTerm)}</p>
+                    </div>
+                ` : '';
+                
+                const cardClasses = isDailyProverb 
+                    ? 'bg-[var(--color-bg-card)] p-6 rounded-xl shadow-2xl border-t-8 border-[var(--color-accent)]' 
+                    : 'bg-[var(--color-bg-card)] p-5 rounded-xl shadow-lg border border-[var(--color-border)] hover:shadow-xl transition-shadow duration-300';
+                
+                return `
+                    <div class="proverb-card ${cardClasses} fade-in" data-id="${proverb.id}" style="animation-delay: ${Math.random() * 0.2}s;">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-lg md:text-xl font-serif font-bold text-[var(--color-heading)] leading-snug pr-4">
+                                ${highlightText(proverb.proverbe, highlightTerm)}
+                            </h3>
+                            <button class="favorite-btn flex-shrink-0 p-2 rounded-full hover:bg-[var(--color-bg-alt)] text-[var(--color-text-light)] hover:text-pink-500 ${favClass}" data-id="${proverb.id}" aria-label="Ajouter aux favoris">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="${isFavorite ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                            </button>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            ${themesHTML}
+                        </div>
+                        
+                        ${explanationHTML}
+                        
+                        <button class="action-btn text-sm font-semibold text-[var(--color-primary)] mt-3 hover:text-[var(--color-accent)] transition-colors duration-200 flex items-center gap-1" data-id="${proverb.id}" data-action="details">
+                            Détails & Suggestions AI
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                `;
+            };
+
+            // --- Explorer Functionality ---
             
-            /**
-             * Filtre l'ensemble des proverbes basé sur le terme de recherche et le thème actif.
-             * Cette fonction est l'étape 1, elle travaille sur le grand fichier source.
-             * @param {string} searchTerm
-             * @param {string|null} theme
-             * @returns {Array<Object>} Les proverbes filtrés.
-             */
-            const filterProverbs = (searchTerm, theme) => {
-                const normalizedSearchTerm = normalizeString(searchTerm).trim();
+            const filterProverbs = (proverbs, search, theme) => {
+                const lowerSearch = search.toLowerCase();
+                const lowerTheme = theme.toLowerCase();
 
                 return proverbs.filter(p => {
-                    let matchesTheme = true;
-                    const themes = getThemesAsArray(p); // Garantir tableau
-
-                    // 1. Filtrage par thème
-                    if (theme) {
-                        matchesTheme = themes.includes(theme);
-                    }
+                    const matchesSearch = !search || 
+                        p.proverbe.toLowerCase().includes(lowerSearch) || 
+                        (p.explication && p.explication.toLowerCase().includes(lowerSearch));
                     
-                    if (!matchesTheme) return false; // Inutile de continuer si le thème ne correspond pas
-
-                    // 2. Filtrage par terme de recherche
-                    if (normalizedSearchTerm.length >= 2) {
-                        const normalizedProverb = normalizeString(p.proverb);
-                        const normalizedTranslation = normalizeString(p.translation || '');
-                        // Joindre le tableau de thèmes pour la recherche textuelle
-                        const normalizedTheme = normalizeString(themes.join(' '));
-                        
-                        // La recherche porte sur le proverbe, la traduction ET le thème
-                        const matchesSearch = normalizedProverb.includes(normalizedSearchTerm) ||
-                                              normalizedTranslation.includes(normalizedSearchTerm) ||
-                                              normalizedTheme.includes(normalizedSearchTerm);
-                                              
-                        return matchesSearch;
-
-                    } else if (normalizedSearchTerm.length === 1) {
-                         // Recherche simple pour un seul caractère au début du proverbe
-                         const normalizedProverb = normalizeString(p.proverb);
-                         return normalizedProverb.startsWith(normalizedSearchTerm);
-                    }
+                    const matchesTheme = !theme || 
+                        (p.theme && p.theme.toLowerCase().split(',').map(t => t.trim()).includes(lowerTheme));
                     
-                    // Si pas de terme de recherche (moins de 2 caractères), le match est validé si le thème match
-                    return true;
+                    return matchesSearch && matchesTheme;
                 });
             };
-            
-            /**
-             * Affiche la tranche actuelle des proverbes filtrés (pagination).
-             */
-            const displayProverbsSlice = () => {
-                const start = currentDisplayCount;
-                const end = Math.min(filteredProverbs.length, start + PROVERBS_PER_PAGE);
-                
-                const slice = filteredProverbs.slice(start, end);
 
-                if (start === 0) {
-                    dom.resultsContainer.innerHTML = ''; // Nettoyer pour un nouveau filtre
-                    dom.initialLoadMessage.classList.add('hidden');
+            const renderChunk = (chunk, isNewSearch = false) => {
+                if (isNewSearch) {
+                    dom.resultsContainer.innerHTML = '';
+                    dom.resultsContainer.scrollTop = 0;
                 }
 
-                slice.forEach((proverb, index) => {
-                    // Utiliser le highlightTerm même si on filtre par thème (pour surligner les parties)
-                    const highlightForCard = currentSearchTerm || (currentTheme && currentTheme !== 'Tout' ? currentTheme : '');
-                    const cardHtml = createProverbCardHTML(proverb, false, highlightForCard);
-                    const card = document.createElement('div');
-                    card.innerHTML = cardHtml.trim();
-                    card.style.animationDelay = `${index * 0.05}s`;
-                    card.classList.add('stagger-in');
-                    dom.resultsContainer.appendChild(card.firstChild);
+                chunk.forEach(proverb => {
+                    const cardHTML = createProverbCardHTML(proverb, false, currentSearchTerm);
+                    dom.resultsContainer.insertAdjacentHTML('beforeend', cardHTML);
                 });
-                
-                currentDisplayCount = end;
 
-                // Mettre à jour le bouton "Charger Plus"
-                if (currentDisplayCount < filteredProverbs.length) {
+                if (currentProverbs.length > (currentPage + 1) * CHUNK_SIZE) {
                     dom.loadMoreBtn.classList.remove('hidden');
-                    dom.loadMoreBtn.innerHTML = `Charger ${Math.min(PROVERBS_PER_PAGE, filteredProverbs.length - currentDisplayCount)} proverbes supplémentaires`;
                     dom.loadMoreBtn.classList.remove('loading');
                     dom.loadMoreBtn.disabled = false;
+                    dom.loadMoreBtn.textContent = `Charger ${Math.min(CHUNK_SIZE, currentProverbs.length - (currentPage + 1) * CHUNK_SIZE)} proverbes supplémentaires`;
                 } else {
                     dom.loadMoreBtn.classList.add('hidden');
                 }
 
-                // Mettre à jour les messages de résultat
-                if (filteredProverbs.length === 0) {
-                    dom.noResults.classList.remove('hidden');
-                    dom.resultsFeedback.textContent = '';
-                } else {
-                    dom.noResults.classList.add('hidden');
-                    dom.resultsFeedback.textContent = `Affichage de ${currentDisplayCount} sur ${filteredProverbs.length} proverbes trouvés.`;
+                currentPage++;
+            };
+            
+            const loadNextChunk = () => {
+                const start = currentPage * CHUNK_SIZE;
+                const end = start + CHUNK_SIZE;
+                const chunk = currentProverbs.slice(start, end);
+
+                if (chunk.length > 0) {
+                    renderChunk(chunk);
                 }
             };
             
-            /**
-             * Gère le filtrage complet et l'affichage initial. C'est la fonction principale de l'onglet Explorer.
-             * @param {string} searchTerm
-             * @param {string|null} theme
-             */
-            const filterAndDisplayProverbs = (searchTerm, theme) => {
-                // Étape 1: Filtrer l'ensemble du grand fichier source
-                filteredProverbs = filterProverbs(searchTerm, theme);
-                currentDisplayCount = 0;
-                currentSearchTerm = searchTerm;
-                currentTheme = theme;
+            const updateResults = (isNewSearch = true) => {
+                const filteredProverbs = filterProverbs(allProverbs, currentSearchTerm, currentThemeFilter);
+                currentProverbs = filteredProverbs;
+                currentPage = 0; // Reset page on new search/filter
 
-                // Étape 2: Afficher la première tranche paginée
-                dom.resultsContainer.innerHTML = ''; // Nettoyer l'affichage précédent
                 dom.initialLoadMessage.classList.add('hidden');
-
-                if (filteredProverbs.length > 0) {
-                    displayProverbsSlice();
-                } else {
+                
+                if (currentProverbs.length === 0) {
+                    dom.resultsContainer.innerHTML = '';
                     dom.resultsFeedback.textContent = '';
                     dom.loadMoreBtn.classList.add('hidden');
                     dom.noResults.classList.remove('hidden');
-                    dom.initialLoadMessage.classList.add('hidden');
-                }
-            };
-            
-            /**
-             * Gère la recherche instantanée (déclenchée par l'input).
-             */
-            const handleSearchInput = () => {
-                const searchTerm = dom.searchInput.value.trim();
-                
-                // Si l'utilisateur tape une recherche, on désactive le filtre de thème pour la recherche textuelle
-                // et on le conserve si la recherche est vide.
-                const activeTheme = searchTerm === '' ? currentTheme : null;
-
-                // Mettre à jour l'état visuel du filtre de thème
-                document.querySelectorAll('.theme-pill-button').forEach(btn => {
-                    const btnTheme = btn.dataset.theme;
-                    btn.classList.remove('active');
-                    
-                    if (searchTerm === '' && btnTheme === (currentTheme || '')) {
-                        btn.classList.add('active');
-                    }
-                    
-                    if (searchTerm !== '' && btnTheme === '') {
-                        btn.classList.add('active'); // Activer "Tout" quand une recherche textuelle est en cours
-                    }
-                });
-                
-                filterAndDisplayProverbs(searchTerm, activeTheme);
-            };
-
-            /**
-             * Gère le clic sur le bouton Aléatoire.
-             */
-            const handleRandomClick = () => {
-                if (proverbs.length === 0) {
-                    showToast("Erreur: La banque de proverbes n'est pas chargée.", 'error');
                     return;
                 }
 
-                // 1. Désactiver la recherche et le filtre de thème
-                dom.searchInput.value = '';
-                currentTheme = ''; // Réinitialiser à "Tout"
-                document.querySelectorAll('.theme-pill-button').forEach(btn => btn.classList.remove('active'));
-                document.querySelector('.theme-pill-button[data-theme=""]').classList.add('active'); // Activer "Tout"
-
-                // 2. Sélectionner un proverbe aléatoire parmi TOUS
-                const randomIndex = Math.floor(Math.random() * proverbs.length);
-                const randomProverb = proverbs[randomIndex];
-                
-                // 3. Simuler le filtrage pour n'afficher que le proverbe aléatoire.
-                filteredProverbs = [randomProverb];
-                currentDisplayCount = 0;
-                currentSearchTerm = '';
-                
-                // 4. Afficher le résultat unique
-                dom.resultsContainer.innerHTML = '';
-                dom.initialLoadMessage.classList.add('hidden');
                 dom.noResults.classList.add('hidden');
-                dom.loadMoreBtn.classList.add('hidden');
-                dom.resultsFeedback.textContent = "Proverbe aléatoire affiché.";
+                dom.resultsFeedback.textContent = `${currentProverbs.length} proverbe(s) trouvé(s).`;
+                renderChunk(currentProverbs.slice(0, CHUNK_SIZE), true);
                 
-                const cardHtml = createProverbCardHTML(randomProverb, false, '');
-                const card = document.createElement('div');
-                card.innerHTML = cardHtml.trim();
-                dom.resultsContainer.appendChild(card.firstChild);
-                
-                // Faire défiler vers le résultat
-                dom.explorerTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
-                // Ajouter une petite animation pour le focus
-                const randomCard = dom.resultsContainer.querySelector(`.proverb-card[data-id="${randomProverb.id}"]`);
-                if(randomCard) {
-                    randomCard.classList.add('highlight');
-                    setTimeout(() => randomCard.classList.remove('highlight'), 2000);
-                }
+                // Highlight active theme filter pill
+                dom.themeListContainer.querySelectorAll('.theme-pill-button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme.toLowerCase() === currentThemeFilter.toLowerCase());
+                });
             };
+
+            dom.searchInput.addEventListener('input', debounce(() => {
+                currentSearchTerm = dom.searchInput.value.trim();
+                updateResults();
+            }, 300));
             
-            /**
-             * Met à jour la liste des thèmes disponibles dans la barre d'exploration.
-             * Et attache les écouteurs d'événements pour le filtrage par thème.
-             */
+            dom.clearSearchBtn.addEventListener('click', () => {
+                dom.searchInput.value = '';
+                currentSearchTerm = '';
+                updateResults();
+            });
+
+            dom.loadMoreBtn.addEventListener('click', () => {
+                dom.loadMoreBtn.classList.add('loading');
+                dom.loadMoreBtn.disabled = true;
+                // Use a small delay for visual feedback
+                setTimeout(loadNextChunk, 200);
+            });
+            
+            const handleThemeFilter = (theme) => {
+                currentThemeFilter = theme;
+                updateResults();
+            };
+
             const updateAvailableThemes = () => {
                 dom.themeListContainer.innerHTML = '';
-                // Extraire tous les thèmes uniques
-                allThemes = [...new Set(proverbs.flatMap(p => getThemesAsArray(p)).filter(t => t))].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+                // 1. Collect all unique themes
+                allThemes = Array.from(new Set(
+                    allProverbs.flatMap(p => (p.theme || '').split(','))
+                        .map(t => t.trim())
+                        .filter(t => t.length > 0)
+                )).sort();
+                
+                // 2. Add 'Tout' button
+                const allButton = `<button class="theme-pill-button active text-sm font-semibold px-3 py-1 bg-[var(--color-primary)] text-white rounded-full transition-all duration-200" data-theme="">Tout</button>`;
+                dom.themeListContainer.insertAdjacentHTML('beforeend', allButton);
 
-                allThemes.unshift("Tout"); // Ajout de l'option "Tout" au début
-
+                // 3. Add theme buttons
                 allThemes.forEach(theme => {
-                    const button = document.createElement('button');
-                    button.textContent = theme;
-                    button.setAttribute('data-theme', theme === 'Tout' ? '' : theme);
-                    button.classList.add('theme-pill-button', 'flex-shrink-0', 'px-3', 'py-1', 'text-sm', 'font-semibold', 'rounded-full', 'border', 'border-[var(--color-border)]', 'bg-[var(--color-bg-alt)]', 'text-[var(--color-text)]', 'hover:bg-[var(--color-primary)]/80', 'hover:text-white', 'whitespace-nowrap', 'shadow-sm');
-
-                    if ((!currentTheme && theme === 'Tout') || (currentTheme === theme)) {
-                        button.classList.add('active');
-                    }
-                    
-                    // Gestion du clic pour le filtre par thème
-                    button.addEventListener('click', () => {
-                        dom.searchInput.value = ''; // Réinitialiser la recherche
-
-                        const newTheme = button.getAttribute('data-theme');
-                        
-                        // Si l'utilisateur clique sur le thème actif, on le désélectionne (sauf pour "Tout")
-                        if (newTheme === currentTheme && newTheme !== '') {
-                            currentTheme = ''; // Désélectionner le thème, revenir à "Tout"
-                        } else {
-                            currentTheme = newTheme;
-                        }
-                        
-                        // Mettre à jour les classes actives des boutons
-                        document.querySelectorAll('.theme-pill-button').forEach(btn => btn.classList.remove('active'));
-                        
-                        // Si un thème est sélectionné (ou 'Tout' est le défaut), l'activer
-                        const activeDataTheme = currentTheme === null ? '' : currentTheme; 
-                        const targetBtn = document.querySelector(`.theme-pill-button[data-theme='${activeDataTheme}']`);
-                        if (targetBtn) {
-                             targetBtn.classList.add('active');
-                        }
-
-                        filterAndDisplayProverbs('', activeDataTheme); // Lancer le filtre
-                    });
-
-                    dom.themeListContainer.appendChild(button);
+                    const buttonHTML = `
+                        <button class="theme-pill-button text-sm font-semibold px-3 py-1 text-[var(--color-text)] bg-[var(--color-bg-alt)] rounded-full hover:bg-[var(--color-primary)] hover:text-white transition-all duration-200" data-theme="${theme}">
+                            ${theme}
+                        </button>
+                    `;
+                    dom.themeListContainer.insertAdjacentHTML('beforeend', buttonHTML);
                 });
                 
-                // S'assurer qu'un thème par défaut est sélectionné (le premier ou 'Tout')
-                 if (!currentTheme) {
-                     document.querySelector('.theme-pill-button[data-theme=""]').classList.add('active');
-                 }
-            };
-
-            // --- LOGIQUE DES FAVORIS ---
-            
-            const renderFavorites = () => {
-                dom.favoritesContainer.innerHTML = '';
-                const favProverbs = proverbs.filter(p => isFavorite(p.id));
-                
-                if (favProverbs.length === 0) {
-                    dom.noFavorites.classList.remove('hidden');
-                } else {
-                    dom.noFavorites.classList.add('hidden');
-                    favProverbs.forEach((proverb, index) => {
-                         const cardHtml = createProverbCardHTML(proverb);
-                         const card = document.createElement('div');
-                         card.innerHTML = cardHtml.trim();
-                         card.style.animationDelay = `${index * 0.05}s`;
-                         card.classList.add('stagger-in');
-                         dom.favoritesContainer.appendChild(card.firstChild);
-                    });
-                }
-            };
-
-            // --- LOGIQUE DU QUIZ (LAISSE LE MARQUEUR DE CHARGEMENT) ---
-            
-            // Simule l'initialisation du quiz après le chargement des données
-            const initQuiz = () => {
-                 dom.quizContainer.innerHTML = '<p class="text-center text-[var(--color-text-light)]">Le Quiz sera disponible bientôt.</p>';
-            };
-
-            // --- GESTION DES MODALES ET ÉVÉNEMENTS GÉNERAUX ---
-
-            const initModal = () => {
-                dom.modalCloseBtn.addEventListener('click', hideModal);
-                dom.modalBackdrop.addEventListener('click', hideModal);
-                
-                dom.modalContent.addEventListener('click', (e) => {
-                    if (e.target.closest('.favorite-btn')) {
-                        const id = dom.modalFavoriteBtn.getAttribute('data-id');
-                        toggleFavorite(id);
-                        
-                        // Mettre à jour l'état du bouton dans la modale
-                        const isFav = isFavorite(id);
-                        dom.modalFavoriteBtn.classList.toggle('favorited', isFav);
-                        dom.modalFavoriteBtn.querySelector('#modal-favorite-text').textContent = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
-
-                        // Mettre à jour l'état du bouton dans l'onglet explorer/favoris si la carte existe
-                        const cardButton = document.querySelector(`.proverb-card[data-id="${id}"] .favorite-btn`);
-                        if (cardButton) {
-                             cardButton.classList.toggle('favorited', isFav);
-                             cardButton.querySelector('svg').setAttribute('fill', isFav ? 'currentColor' : 'none');
-                        }
-                    }
-                });
-            };
-
-            const initThemeToggle = () => {
-                const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && isSystemDark);
-
-                if (isDark) {
-                    document.documentElement.classList.add('dark');
-                    dom.themeToggle.querySelector('#theme-icon-light').classList.add('hidden');
-                    dom.themeToggle.querySelector('#theme-icon-dark').classList.remove('hidden');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    dom.themeToggle.querySelector('#theme-icon-light').classList.remove('hidden');
-                    dom.themeToggle.querySelector('#theme-icon-dark').classList.add('hidden');
-                }
-
-                dom.themeToggle.addEventListener('click', () => {
-                    const isCurrentlyDark = document.documentElement.classList.contains('dark');
-                    if (isCurrentlyDark) {
-                        document.documentElement.classList.remove('dark');
-                        localStorage.theme = 'light';
-                        dom.themeToggle.querySelector('#theme-icon-light').classList.remove('hidden');
-                        dom.themeToggle.querySelector('#theme-icon-dark').classList.add('hidden');
-                    } else {
-                        document.documentElement.classList.add('dark');
-                        localStorage.theme = 'dark';
-                        dom.themeToggle.querySelector('#theme-icon-light').classList.add('hidden');
-                        dom.themeToggle.querySelector('#theme-icon-dark').classList.remove('hidden');
-                    }
-                });
-            };
-
-            const initNavigation = () => {
-                let currentTab = dom.accueilTab.id;
-
-                const switchTab = (tabId) => {
-                    document.querySelectorAll('.tab-content').forEach(section => {
-                        section.classList.remove('active');
-                    });
-                    document.getElementById(tabId).classList.add('active');
-
-                    dom.navButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        if (btn.dataset.tab === tabId) {
-                            btn.classList.add('active');
-                        }
-                    });
-
-                    currentTab = tabId;
-                    
-                    // Actions spécifiques à l'onglet
-                    if (tabId === 'favoris-tab') {
-                        renderFavorites();
-                    } else if (tabId === 'explorer-tab') {
-                        // Relancer l'affichage initial/filtré si on revient sur explorer
-                        filterAndDisplayProverbs(currentSearchTerm, currentTheme);
-                    }
-                };
-
-                dom.navButtons.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        switchTab(btn.dataset.tab);
-                    });
-                });
-
-                // Activation de l'onglet par défaut (Accueil)
-                switchTab(currentTab);
-            };
-
-            const initScroll = () => {
-                const showBackToTop = () => {
-                    if (window.scrollY > 300) {
-                        dom.backToTop.classList.add('visible');
-                    } else {
-                        dom.backToTop.classList.remove('visible');
-                    }
-                };
-
-                window.addEventListener('scroll', showBackToTop);
-                
-                dom.backToTop.addEventListener('click', () => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            };
-            
-            // Écouteur de clic délégué pour les boutons de carte (Favoris/Explication)
-            const initCardListeners = () => {
-                const delegatedHandler = (e) => {
-                    const cardButton = e.target.closest('.action-btn');
-                    if (!cardButton) return;
-                    
-                    const proverbId = parseInt(cardButton.dataset.id);
-                    const proverb = proverbs.find(p => p.id === proverbId);
-
-                    if (cardButton.classList.contains('favorite-btn')) {
-                        toggleFavorite(proverbId);
-                        // Mettre à jour le statut du bouton dans la carte
-                        cardButton.classList.toggle('favorited', isFavorite(proverbId));
-                        cardButton.querySelector('svg').setAttribute('fill', isFavorite(proverbId) ? 'currentColor' : 'none');
-                        if (dom.modalContent.classList.contains('visible') && dom.modalFavoriteBtn.dataset.id == proverbId) {
-                           // Mettre à jour la modale si elle est ouverte sur ce proverbe
-                           dom.modalFavoriteBtn.classList.toggle('favorited', isFavorite(proverbId));
-                           dom.modalFavoriteBtn.querySelector('#modal-favorite-text').textContent = isFavorite(proverbId) ? 'Retirer des favoris' : 'Ajouter aux favoris';
-                        }
-                    } else if (cardButton.dataset.action === 'explain') {
-                        renderProverbInModal(proverb);
-                    }
-                };
-
-                dom.resultsContainer.addEventListener('click', delegatedHandler);
-                dom.favoritesContainer.addEventListener('click', delegatedHandler);
-            };
-            
-            // --- NOUVEAUX ÉCOUTEURS D'ÉVÉNEMENTS POUR L'EXPLORATEUR (CORRIGÉ) ---
-            
-            const initExplorerListeners = () => {
-                // Recherche instantanée
-                dom.searchInput.addEventListener('input', handleSearchInput);
-                
-                // Bouton Aléatoire
-                dom.randomBtn.addEventListener('click', handleRandomClick);
-                
-                // Bouton Effacer la recherche
-                dom.clearSearchBtn.addEventListener('click', () => {
-                    dom.searchInput.value = '';
-                    handleSearchInput(); // Relance la recherche pour afficher tous les résultats ou filtrer par thème
-                    dom.searchInput.focus();
-                });
-                
-                // Bouton "Charger Plus" (Pagination)
-                dom.loadMoreBtn.addEventListener('click', () => {
-                    if (!dom.loadMoreBtn.disabled) {
-                        dom.loadMoreBtn.classList.add('loading');
-                        dom.loadMoreBtn.disabled = true;
-                        // Délai pour simuler un petit chargement
-                        setTimeout(() => {
-                            displayProverbsSlice();
-                        }, 100); 
+                // 4. Attach click listener (delegation)
+                dom.themeListContainer.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.theme-pill-button');
+                    if (btn) {
+                        const newTheme = btn.dataset.theme;
+                        handleThemeFilter(newTheme);
+                        // Update active state manually for 'Tout' and others
+                        dom.themeListContainer.querySelectorAll('.theme-pill-button').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
                     }
                 });
                 
-                // Gestionnaire de clics pour les badges de thème dans les cartes (délégation d'événements)
+                // 5. Add click listener for card themes (delegation on results container)
                 dom.resultsContainer.addEventListener('click', (e) => {
-                    const badge = e.target.closest('.card-theme-badge');
-                    if (badge) {
-                        const theme = badge.dataset.theme;
-                        if (theme) {
-                            // Basculer vers l'onglet Explorer
-                            dom.explorerTabBtn.click();
-                            
-                            // Appliquer le filtre de thème
-                            currentTheme = theme;
-                            dom.searchInput.value = '';
-                            document.querySelectorAll('.theme-pill-button').forEach(btn => btn.classList.remove('active'));
-                            const targetBtn = document.querySelector(`.theme-pill-button[data-theme='${theme}']`);
-                            if(targetBtn) targetBtn.classList.add('active');
-                            
-                            filterAndDisplayProverbs('', currentTheme);
-                            
-                            // Scroll vers le haut de la zone de résultats
-                            dom.explorerTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
+                    const btn = e.target.closest('.card-theme-badge');
+                    if (btn) {
+                        const theme = btn.dataset.theme;
+                        // Switch to explorer tab and apply filter
+                        switchTab('explorer-tab');
+                        handleThemeFilter(theme);
+                        currentSearchTerm = '';
+                        dom.searchInput.value = '';
                     }
                 });
+                
+                // Initial update for theme list to match current filter (should be empty initially)
+                dom.themeListContainer.querySelector('[data-theme=""]').classList.add('active');
+            };
 
-                dom.goToExplorerBtn.addEventListener('click', () => {
-                    dom.explorerTabBtn.click();
-                    dom.searchInput.focus();
+            const handleExplorerTabOpen = () => {
+                 // On first load, nothing happens here. Subsequent loads just show the current state.
+                 // We don't re-render unless a filter/search changes.
+            };
+            
+            // --- Random Proverb ---
+            dom.randomBtn.addEventListener('click', () => {
+                if (allProverbs.length === 0) return;
+                const randomIndex = Math.floor(Math.random() * allProverbs.length);
+                const randomProverb = allProverbs[randomIndex];
+                
+                const proverbDetails = generateProverbDetailsHTML(randomProverb, true);
+                openModal(`Proverbe Aléatoire 🎲`, proverbDetails);
+            });
+
+            // --- Favorites Management ---
+            const saveFavorites = () => {
+                localStorage.setItem('kabyle_proverbs_favorites', JSON.stringify(favorites));
+                // Re-render favorites if on that tab
+                if (document.getElementById('favoris-tab').classList.contains('active')) {
+                    renderFavorites();
+                }
+            };
+            
+            const toggleFavorite = (id) => {
+                const idNum = parseInt(id);
+                const index = favorites.indexOf(idNum);
+                if (index > -1) {
+                    favorites.splice(index, 1);
+                    showToast('Proverbe retiré des favoris.');
+                } else {
+                    favorites.push(idNum);
+                    showToast('Proverbe ajouté aux favoris ! ❤️');
+                }
+                saveFavorites();
+            };
+
+            const renderFavorites = () => {
+                const favoriteProverbs = allProverbs.filter(p => favorites.includes(p.id));
+
+                dom.favoritesContainer.innerHTML = '';
+
+                if (favoriteProverbs.length === 0) {
+                    dom.noFavorites.classList.remove('hidden');
+                    return;
+                }
+                
+                dom.noFavorites.classList.add('hidden');
+                
+                favoriteProverbs.forEach(proverb => {
+                    dom.favoritesContainer.insertAdjacentHTML('beforeend', createProverbCardHTML(proverb));
                 });
             };
 
-            // --- FONCTION PRINCIPALE ---
+            // Event delegation for favorite buttons in results, favorites, and daily card
+            document.addEventListener('click', (e) => {
+                const favBtn = e.target.closest('.favorite-btn');
+                if (favBtn) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Prevent card action if it was a nested click
+                    const id = favBtn.dataset.id;
+                    toggleFavorite(id);
+                    // Update the clicked button's state
+                    favBtn.classList.toggle('favorited', favorites.includes(parseInt(id)));
+                    favBtn.querySelector('svg').style.fill = favorites.includes(parseInt(id)) ? 'currentColor' : 'none';
+                }
+            });
+
+
+            // --- Details & AI Suggestions (Modal Content) ---
+            const generateProverbDetailsHTML = (proverb, isRandom = false) => {
+                const detailsHTML = `
+                    <h3>Proverbe</h3>
+                    <p class="text-xl font-serif font-bold text-[var(--color-heading)]">${proverb.proverbe}</p>
+                    
+                    ${proverb.explication ? `
+                        <h3>Explication Détaillée</h3>
+                        <p>${proverb.explication}</p>
+                    ` : `
+                        <h3>Explication</h3>
+                        <p class="text-[var(--color-text-light)]">Désolé, aucune explication détaillée n'est disponible pour ce proverbe dans notre base de données. </p>
+                    `}
+                    
+                    <h3>Thèmes Associés</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${(proverb.theme || '').split(',').filter(t => t.trim().length > 0).map(t => `
+                            <button class="card-theme-badge text-sm font-medium px-3 py-1 bg-[var(--color-primary)] text-white rounded-full" data-theme="${t.trim()}">
+                                ${t.trim()}
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    ${proverb.suggestion_ai ? `
+                        <div class="mt-8 p-4 bg-[var(--color-bg-alt)] rounded-lg border-l-4 border-[var(--color-secondary)]">
+                            <h3>Conseil du Sage AI 🤖</h3>
+                            <p>${proverb.suggestion_ai}</p>
+                        </div>
+                    ` : `
+                        <div class="mt-8 p-4 bg-[var(--color-bg-alt)] rounded-lg border-l-4 border-[var(--color-accent)]">
+                             <h3>Conseil du Sage AI 🤖</h3>
+                            <p class="text-[var(--color-text-light)]">Le Sage AI n'a pas encore fourni d'interprétation pour ce proverbe. Vous pouvez utiliser l'onglet "Sage AI" pour en générer une.</p>
+                        </div>
+                    `}
+                `;
+                return detailsHTML;
+            };
+
+            document.addEventListener('click', (e) => {
+                const detailBtn = e.target.closest('.action-btn[data-action="details"]');
+                if (detailBtn) {
+                    e.preventDefault();
+                    const id = parseInt(detailBtn.dataset.id);
+                    const proverb = allProverbs.find(p => p.id === id);
+                    if (proverb) {
+                        const proverbDetails = generateProverbDetailsHTML(proverb);
+                        openModal('Détails du Proverbe', proverbDetails);
+                    }
+                }
+                
+                // Also handle card theme clicks inside modal
+                const themeBadge = e.target.closest('#modal-body .card-theme-badge');
+                 if (themeBadge) {
+                    e.preventDefault();
+                    closeModal();
+                    switchTab('explorer-tab');
+                    handleThemeFilter(themeBadge.dataset.theme);
+                    currentSearchTerm = '';
+                    dom.searchInput.value = '';
+                }
+            });
+
+            // --- AI Sage Tab Logic ---
+            dom.aiSuggestBtn.addEventListener('click', async () => {
+                const context = dom.aiContextInput.value.trim();
+                if (context.length < 10) {
+                    dom.aiResultFeedback.innerHTML = '<p class="text-red-500 font-semibold">Veuillez décrire votre situation plus en détail (minimum 10 caractères).</p>';
+                    return;
+                }
+                
+                const originalBtnText = dom.aiSuggestBtn.innerHTML;
+                dom.aiSuggestBtn.disabled = true;
+                dom.aiSuggestBtn.innerHTML = '<span class="loader loader-dark"></span> Analyse en cours...';
+                dom.aiResultFeedback.innerHTML = '';
+                
+                // Simulation d'appel AI - REMPLACER AVEC L'API RÉELLE
+                await new Promise(resolve => setTimeout(resolve, 2000)); 
+                
+                // Simulation de la réponse AI
+                const suggestedProverbs = [
+                    allProverbs[Math.floor(Math.random() * allProverbs.length)],
+                    allProverbs[Math.floor(Math.random() * allProverbs.length)],
+                    allProverbs[Math.floor(Math.random() * allProverbs.length)],
+                ].filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i); // unique
+                
+                const responseHTML = `
+                    <div class="mt-4 p-4 bg-[var(--color-bg-card)] rounded-lg shadow-inner">
+                        <h3 class="text-xl font-serif font-bold text-[var(--color-primary)] mb-4">Réponse du Sage :</h3>
+                        <p class="mb-4">"Votre situation a été analysée. Voici les proverbes qui vous guideront :"</p>
+                        <div class="space-y-4">
+                            ${suggestedProverbs.map(p => `
+                                <div class="border border-[var(--color-border)] p-3 rounded-lg bg-[var(--color-bg-alt)]">
+                                    <p class="font-serif font-bold text-[var(--color-heading)]">${p.proverbe}</p>
+                                    <button class="action-btn text-sm font-semibold text-[var(--color-primary)] mt-1 hover:text-[var(--color-accent)] transition-colors duration-200 flex items-center gap-1" data-id="${p.id}" data-action="details">
+                                        Voir les détails
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                dom.aiResultFeedback.innerHTML = responseHTML;
+                dom.aiSuggestBtn.disabled = false;
+                dom.aiSuggestBtn.innerHTML = originalBtnText;
+            });
+            
+            // --- Quiz Logic ---
+            let quizProverbs = [];
+            let currentQuiz = null;
+            let quizScore = 0;
+            let quizQuestionIndex = 0;
+            const QUIZ_LENGTH = 5; // Nombre de questions par quiz
+
+            const generateQuizData = () => {
+                 // S'assurer d'avoir au moins 5 proverbes
+                if (allProverbs.length < QUIZ_LENGTH) {
+                    dom.quizContainer.innerHTML = '<p class="text-red-500 text-center">Base de données trop petite pour le Quiz.</p>';
+                    return;
+                }
+                
+                // Sélectionner des proverbes aléatoires et uniques
+                const selectedProverbs = [];
+                const pool = [...allProverbs];
+                while(selectedProverbs.length < QUIZ_LENGTH && pool.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * pool.length);
+                    selectedProverbs.push(pool.splice(randomIndex, 1)[0]);
+                }
+                
+                quizProverbs = selectedProverbs;
+                currentQuiz = [];
+                
+                quizProverbs.forEach(p => {
+                    const correctTheme = (p.theme || '').split(',')[0].trim();
+                    if (!correctTheme) return; // Skip if no theme
+                    
+                    // Trouver 3 autres thèmes uniques pour les mauvaises réponses
+                    const incorrectThemes = [];
+                    const themePool = [...allThemes].filter(t => t !== correctTheme);
+                    while(incorrectThemes.length < 3 && themePool.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * themePool.length);
+                        incorrectThemes.push(themePool.splice(randomIndex, 1)[0]);
+                    }
+                    
+                    const options = [correctTheme, ...incorrectThemes].filter(t => t.length > 0);
+                    // Shuffle options
+                    for (let i = options.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [options[i], options[j]] = [options[j], options[i]];
+                    }
+                    
+                    currentQuiz.push({
+                        proverbe: p.proverbe,
+                        correctAnswer: correctTheme,
+                        options: options
+                    });
+                });
+                
+                // Filtrer les questions qui n'ont pas pu être générées (ex: pas assez d'options de thèmes)
+                currentQuiz = currentQuiz.filter(q => q.options.length === 4);
+                
+                quizScore = 0;
+                quizQuestionIndex = 0;
+                renderQuizQuestion();
+            };
+            
+            const renderQuizQuestion = () => {
+                if (!currentQuiz || currentQuiz.length === 0 || quizQuestionIndex >= currentQuiz.length) {
+                    renderQuizResults();
+                    return;
+                }
+                
+                const question = currentQuiz[quizQuestionIndex];
+                const totalQuestions = currentQuiz.length;
+
+                const questionHTML = `
+                    <div id="quiz-question" class="fade-in" style="animation-delay: 0.1s;">
+                        <p class="text-lg font-semibold text-[var(--color-primary)] mb-1">Question ${quizQuestionIndex + 1} / ${totalQuestions}</p>
+                        <h3 class="text-2xl font-serif text-[var(--color-heading)] mb-6">À quel thème ce proverbe est-il le plus étroitement associé ?</h3>
+                        
+                        <p class="text-xl font-bold text-[var(--color-secondary)] mb-8 p-4 border-2 border-dashed rounded-lg bg-[var(--color-bg-alt)]/50">${question.proverbe}</p>
+                        
+                        <div id="quiz-options" class="space-y-4">
+                            ${question.options.map((option, index) => `
+                                <button class="quiz-option w-full text-left text-lg font-medium" data-answer="${option}" data-index="${index}">
+                                    ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <div id="quiz-feedback-box" class="mt-8 p-4 rounded-lg min-h-[50px]"></div>
+                        <button id="next-question-btn" class="w-full mt-4 px-5 py-3 bg-[var(--color-accent)] text-white font-semibold rounded-lg shadow-md transition-all duration-300 hidden">
+                            Question Suivante
+                        </button>
+                    </div>
+                `;
+
+                dom.quizContainer.innerHTML = questionHTML;
+                attachQuizListeners();
+            };
+            
+            const attachQuizListeners = () => {
+                const optionsContainer = document.getElementById('quiz-options');
+                const nextBtn = document.getElementById('next-question-btn');
+                const feedbackBox = document.getElementById('quiz-feedback-box');
+                const questionData = currentQuiz[quizQuestionIndex];
+                let answered = false;
+
+                optionsContainer.addEventListener('click', (e) => {
+                    if (answered) return;
+                    
+                    const optionBtn = e.target.closest('.quiz-option');
+                    if (!optionBtn) return;
+                    
+                    answered = true;
+                    const selectedAnswer = optionBtn.dataset.answer;
+                    
+                    // Disable all options
+                    optionsContainer.querySelectorAll('.quiz-option').forEach(btn => btn.disabled = true);
+
+                    if (selectedAnswer === questionData.correctAnswer) {
+                        quizScore++;
+                        optionBtn.classList.add('correct');
+                        feedbackBox.innerHTML = '<p class="text-xl font-bold text-green-700 dark:text-green-400">✅ Bonne Réponse !</p>';
+                    } else {
+                        optionBtn.classList.add('incorrect');
+                        // Highlight correct answer
+                        optionsContainer.querySelector(`[data-answer="${questionData.correctAnswer}"]`).classList.add('correct');
+                        feedbackBox.innerHTML = `<p class="text-xl font-bold text-red-700 dark:text-red-400">❌ Mauvaise Réponse. La bonne réponse était : <span class="text-[var(--color-primary)]">${questionData.correctAnswer}</span></p>`;
+                    }
+                    
+                    nextBtn.classList.remove('hidden');
+                });
+                
+                nextBtn.addEventListener('click', () => {
+                    quizQuestionIndex++;
+                    renderQuizQuestion();
+                });
+            };
+            
+            const renderQuizResults = () => {
+                const total = currentQuiz.length;
+                const percent = (quizScore / total) * 100;
+                
+                let feedbackText = '';
+                let feedbackColor = 'text-[var(--color-primary)]';
+                if (percent === 100) {
+                    feedbackText = "Félicitations ! Vous êtes un véritable Sage ! 🌟";
+                    feedbackColor = 'text-green-600 dark:text-green-400';
+                } else if (percent >= 60) {
+                    feedbackText = "Très bien ! Vous maîtrisez une bonne partie de la sagesse. 👍";
+                } else {
+                    feedbackText = "Continuez à apprendre ! La sagesse s'acquiert avec le temps. 📚";
+                    feedbackColor = 'text-amber-600 dark:text-amber-400';
+                }
+
+                const resultsHTML = `
+                    <div id="quiz-results" class="text-center fade-in" style="animation-delay: 0.1s;">
+                        <h3 class="text-3xl font-serif text-[var(--color-heading)] mb-4">Résultats du Quiz</h3>
+                        <div class="p-8 bg-[var(--color-bg-alt)] rounded-xl shadow-lg">
+                            <p class="text-6xl font-extrabold ${feedbackColor}">${quizScore}/${total}</p>
+                            <p class="text-xl font-bold mt-2 ${feedbackColor}">(${Math.round(percent)}%)</p>
+                        </div>
+                        <p class="text-2xl font-serif mt-6 ${feedbackColor}">${feedbackText}</p>
+                        
+                        <button id="retake-quiz-btn" class="w-full mt-8 px-5 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:scale-[1.02] transition-transform">
+                            Recommencer un Quiz
+                        </button>
+                    </div>
+                `;
+                
+                dom.quizContainer.innerHTML = resultsHTML;
+                document.getElementById('retake-quiz-btn').addEventListener('click', generateQuizData);
+            };
+            
+            const generateQuiz = () => {
+                if (allProverbs.length > 0) {
+                    generateQuizData();
+                } else {
+                    // Quiz container already shows a loader/message, will be updated by main()
+                }
+            };
+            
+            // --- About Modal ---
+            dom.aboutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const aboutContent = `
+                    <h3>À Propos de Inzan n Teqbaylit</h3>
+                    <p>Cette application a été conçue pour préserver et partager la richesse des proverbes (Inzan) et de la sagesse populaire kabyle.</p>
+                    
+                    <h3>Source des Données</h3>
+                    <p>Une grande partie de cette collection provient des 4 tomes de l'œuvre magistrale de **Monsieur Aomar SIDER** : **"INZAN amek i d-llan"** (Origines des proverbes et expressions kabyles). Nous remercions Monsieur SIDER pour son travail monumental de préservation de ce trésor culturel.</p>
+                    
+                    <h3>Technologie</h3>
+                    <ul>
+                        <li>**Front-end**: HTML, CSS (TailwindCSS) et JavaScript pur (vanilla JS).</li>
+                        <li>**Recherche & Filtres**: Tous les filtres et la logique de recherche sont exécutés localement, garantissant une rapidité et une confidentialité maximales.</li>
+                        <li>**Sage AI**: La fonctionnalité "Sage AI" est une simulation illustrant le potentiel d'un modèle d'IA générative appliqué au patrimoine oral.</li>
+                    </ul>
+                    
+                    <h3>Développeur</h3>
+                    <p>Application développée par **TAMAZIRT Boussad**.</p>
+                    <p class="text-sm text-[var(--color-text-light)]">Dernière mise à jour : Octobre 2025</p>
+                `;
+                openModal('En Savoir Plus', aboutContent);
+            });
+            
+            // --- Back to Top ---
+            window.addEventListener('scroll', () => {
+                dom.backToTop.classList.toggle('visible', window.scrollY > 300);
+            });
+            dom.backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+
+            // --- Data Loading & Initialization ---
 
             const main = () => {
-                // 1. Initialiser le thème, la navigation et le scroll
-                initThemeToggle();
-                initNavigation();
-                initScroll();
-                initModal();
-
-                // 2. Charger les données du fichier proverbs.json
                 fetch('proverbs.json')
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('proverbs.json non trouvé ou erreur de réseau.');
+                            throw new Error(`Erreur HTTP: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        proverbs = data;
+                        allProverbs = data.proverbs;
                         
-                        // 3. Initialiser les écouteurs de l'explorateur (maintenant que les données sont chargées)
-                        initExplorerListeners();
-                        initCardListeners();
-                        initQuiz();
+                        // Set proverb of the day (based on a consistent date-based index)
+                        const start = new Date(2023, 0, 1);
+                        const today = new Date();
+                        const diffTime = Math.abs(today - start);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        const dailyIndex = diffDays % allProverbs.length;
                         
-                        // 4. Afficher le proverbe du jour (aléatoire)
-                        const dailyProverb = proverbs[Math.floor(Math.random() * proverbs.length)];
+                        const dailyProverb = allProverbs[dailyIndex];
                         dom.proverbOfTheDayCard.innerHTML = createProverbCardHTML(dailyProverb, true);
 
-                        // 5. Initialiser les filtres de l'explorateur et l'affichage initial
                         updateAvailableThemes();
                         
-                        // Charger les premiers résultats de l'explorateur (avec le filtre par défaut 'Tout')
-                        currentTheme = ''; // Thème par défaut 'Tout'
-                        filterAndDisplayProverbs('', currentTheme);
-                        
-                        // 6. Masquer l'écran de chargement
                         setTimeout(() => dom.splashScreen.classList.add('hidden'), 500);
                     })
                     .catch(error => {
