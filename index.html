@@ -196,9 +196,8 @@
             animation: zoomIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
         
-        /* Styles pour le bouton "Charger Plus" */
-        #load-more-btn.hidden { display: none; }
-        #load-more-btn.loading { opacity: 0.7; cursor: wait; }
+        /* Styles pour le bouton "Charger Plus" (maintenant caché) */
+        #load-more-btn { display: none !important; }
 
         /* Style pour les contrôles désactivés pendant le chargement */
         :disabled {
@@ -339,8 +338,12 @@
                     </div>
                 </div>
                 
+                <div id="infinite-scroll-loader" class="text-center py-8 hidden">
+                    <span class="loader loader-dark"></span>
+                </div>
+
                 <div class="text-center mt-8">
-                    <button id="load-more-btn" class="hidden w-full max-w-sm px-8 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:bg-[var(--color-secondary)] transition-colors duration-300">
+                    <button id="load-more-btn" class="w-full max-w-sm px-8 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:bg-[var(--color-secondary)] transition-colors duration-300">
                         Charger 50 proverbes supplémentaires
                     </button>
                 </div>
@@ -440,6 +443,7 @@
                 resultsFeedback: document.getElementById('results-feedback'),
                 explorerMessage: document.getElementById('explorer-message'),
                 loadMoreBtn: document.getElementById('load-more-btn'),
+                infiniteScrollLoader: document.getElementById('infinite-scroll-loader'),
                 favoritesContainer: document.getElementById('favorites-container'),
                 noResults: document.getElementById('no-results'),
                 noFavorites: document.getElementById('no-favorites'),
@@ -479,7 +483,8 @@
                 isCoreDataLoaded: false,
                 currentPage: 0,
                 displayedProverbs: [],
-                currentFilteredProverbs: []
+                currentFilteredProverbs: [],
+                isLoadingMore: false,
             };
             
             // --- FONCTIONS UTILITAIRES ---
@@ -609,14 +614,14 @@
             };
 
             // --- LOGIQUE DE L'ONGLET EXPLORER (FILTRES/PAGINATION) ---
-            const updateLoadMoreButton = () => {
+            const updateMoreResultsState = () => {
                 const totalFilteredCount = state.currentFilteredProverbs.length;
+                // This function acts as a state check for infinite scroll.
+                // It uses the hidden load-more-btn's class as a flag.
                 if (state.displayedProverbs.length >= totalFilteredCount) {
-                    dom.loadMoreBtn.classList.add('hidden');
+                    dom.loadMoreBtn.classList.add('hidden'); // Indicates no more results
                 } else {
-                    dom.loadMoreBtn.classList.remove('hidden');
-                    const remaining = totalFilteredCount - state.displayedProverbs.length;
-                    dom.loadMoreBtn.textContent = `Charger ${Math.min(PROVERBS_PER_PAGE, remaining)} proverbes supplémentaires`;
+                    dom.loadMoreBtn.classList.remove('hidden'); // Indicates more results are available
                 }
             };
             
@@ -641,7 +646,6 @@
 
                     const searchableText = `${p.kabyle_norm} ${p.francais_norm} ${p.theme_norm}`;
                     
-                    // CORRECTION : Remplacement de .every() par .some()
                     // Affiche les résultats si AU MOINS UN des mots-clés correspond (recherche "OU").
                     return keywords.some(keyword => searchableText.includes(keyword));
                 });
@@ -649,6 +653,7 @@
 
             const displayResults = (reset = false) => {
                 if (!state.isCoreDataLoaded) return;
+                state.isLoadingMore = true;
 
                 if (reset) {
                     state.currentPage = 0;
@@ -684,7 +689,8 @@
                 
                 state.displayedProverbs.push(...chunkToLoad);
                 state.currentPage++;
-                updateLoadMoreButton();
+                updateMoreResultsState();
+                state.isLoadingMore = false;
             };
 
             const triggerSearch = () => {
@@ -951,6 +957,27 @@
                 nextBtn.addEventListener('click', startQuiz);
                 nextBtn.focus();
             };
+            
+            const handleInfiniteScroll = () => {
+                // S'exécute seulement dans l'onglet explorer, s'il y a plus de résultats et qu'on ne charge pas déjà.
+                const explorerTabActive = dom.tabContents[1].classList.contains('active');
+                const hasMoreResults = !dom.loadMoreBtn.classList.contains('hidden');
+
+                if (!explorerTabActive || !hasMoreResults || state.isLoadingMore) {
+                    return;
+                }
+
+                const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 400; // Déclenche à 400px du bas
+
+                if (nearBottom) {
+                    dom.infiniteScrollLoader.classList.remove('hidden');
+                    // Timeout pour laisser le loader apparaître avant un potentiel lag du DOM
+                    setTimeout(() => {
+                        displayResults(false);
+                        dom.infiniteScrollLoader.classList.add('hidden');
+                    }, 300);
+                }
+            };
 
             // --- GESTION DES ÉVÉNEMENTS ---
             const setupEventListeners = () => {
@@ -962,11 +989,19 @@
                     triggerSearch();
                     dom.searchInput.focus();
                 });
-                
-                dom.loadMoreBtn.addEventListener('click', () => {
-                    dom.loadMoreBtn.classList.add('loading');
-                    displayResults(false);
-                    dom.loadMoreBtn.classList.remove('loading');
+
+                // Le bouton n'est plus utilisé, mais on garde l'écouteur au cas où
+                dom.loadMoreBtn.addEventListener('click', () => displayResults(false));
+
+                // Gestion du défilement infini
+                let isThrottled = false;
+                window.addEventListener('scroll', () => {
+                    if (isThrottled) return;
+                    isThrottled = true;
+                    setTimeout(() => {
+                        handleInfiniteScroll();
+                        isThrottled = false;
+                    }, 200);
                 });
 
                 dom.goToExplorerBtn.addEventListener('click', () => setActiveTab('explorer-tab'));
@@ -978,7 +1013,7 @@
                     const sourceProverbs = (state.currentFilteredProverbs.length > 0 && dom.searchInput.value) ? state.currentFilteredProverbs : state.proverbs;
                     
                     dom.explorerMessage.classList.add('hidden');
-                    dom.loadMoreBtn.classList.add('hidden');
+                    updateMoreResultsState(); // Met à jour l'état pour le scroll infini
                     dom.noResults.classList.add('hidden');
 
                     const randomProverbs = [];
