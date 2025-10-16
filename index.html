@@ -596,9 +596,7 @@
                 const isFavorite = favorites.includes(proverb.id);
                 const favClass = isFavorite ? 'favorited' : '';
                 
-                // CORRECTION DE L'ERREUR : Uncaught TypeError: Cannot read properties of undefined (reading 'split')
-                // On utilise `proverb.theme || ''` pour s'assurer que si `proverb.theme` est null ou undefined,
-                // on utilise une chaîne vide (`''`) sur laquelle `.split()` peut être appelé sans erreur.
+                // CORRECTION DE L'ERREUR PRÉCÉDENTE: Uncaught TypeError: Cannot read properties of undefined (reading 'split')
                 const themesHTML = (proverb.theme || '')
                     .split(',')
                     .map(theme => {
@@ -1201,9 +1199,16 @@
                         return response.json();
                     })
                     .then(data => {
-                        allProverbs = data.proverbs;
-                        
-                        // Set proverb of the day (based on a consistent date-based index)
+                        // CORRECTION de l'erreur: Cannot read properties of undefined (reading 'length')
+                        // S'assure que allProverbs est un tableau, même si data.proverbs est undefined ou null.
+                        allProverbs = Array.isArray(data.proverbs) ? data.proverbs : [];
+
+                        if (allProverbs.length === 0) {
+                             // Si le tableau est vide ou si la clé était manquante, lance une erreur explicite pour le catch.
+                             throw new Error("Le fichier 'proverbs.json' est vide ou mal structuré. Vérifiez qu'il contient bien une clé 'proverbs' qui est un tableau non vide.");
+                        }
+
+                        // Set proverb of the day (will now work as allProverbs is guaranteed to be a non-empty array)
                         const start = new Date(2023, 0, 1);
                         const today = new Date();
                         const diffTime = Math.abs(today - start);
@@ -1219,13 +1224,14 @@
                     })
                     .catch(error => {
                         console.error("Could not load proverbs:", error);
+                        // L'affichage de l'erreur est amélioré grâce à la nouvelle erreur lancée dans le bloc .then
                         const errorMessage = `<h1 class="text-2xl font-bold text-red-600">Erreur de chargement</h1>
                             <p class="text-red-500 mt-2">Impossible de charger la banque de proverbes (proverbs.json). <br> ${error.message}</p>
-                            <p class="mt-4 text-[var(--color-text-light)]">Veuillez vérifier que le fichier est bien présent et non corrompu.</p>`;
+                            <p class="mt-4 text-[var(--color-text-light)]">Veuillez vérifier que le fichier est bien présent à la racine, qu'il est accessible et que sa structure JSON est correcte (e.g., {"proverbs": [...]}).</p>`;
                         dom.initialLoadMessage.innerHTML = errorMessage;
-                        dom.proverbOfTheDayCard.innerHTML = `<p class="text-center text-red-500">Erreur de chargement.</p>`;
-                        dom.themeListContainer.innerHTML = `<p class="text-center text-red-500 text-sm">Erreur.</p>`;
-                        dom.quizContainer.innerHTML = `<p class="text-center text-red-500">Erreur de chargement des données.</p>`;
+                        dom.proverbOfTheDayCard.innerHTML = `<p class=\"text-center text-red-500\">Erreur de chargement.</p>`;
+                        dom.themeListContainer.innerHTML = `<p class=\"text-center text-red-500 text-sm\">Erreur.</p>`;
+                        dom.quizContainer.innerHTML = `<p class=\"text-center text-red-500\">Erreur de chargement des données.</p>`;
                         setTimeout(() => dom.splashScreen.classList.add('hidden'), 100);
                     });
             };
