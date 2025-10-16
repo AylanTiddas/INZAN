@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22 fill=%22%234A7C59%22%3E%E2%9C%A7%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22 fill=%22%234A7C59%22%3E%25E2%259C%25A7%3C/text%3E%3C/svg%3E">
     
     <style>
         /* Amélioration de la palette de couleurs et du design général */
@@ -195,10 +195,6 @@
         #splash-logo {
             animation: zoomIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
-        
-        /* Styles pour le bouton "Charger Plus" */
-        #load-more-btn.hidden { display: none; }
-        #load-more-btn.loading { opacity: 0.7; cursor: wait; }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8 pb-32 sm:pb-8">
@@ -332,10 +328,8 @@
                     </div>
                 </div>
                 
-                <div class="text-center mt-8">
-                    <button id="load-more-btn" class="hidden w-full max-w-sm px-8 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:bg-[var(--color-secondary)] transition-colors duration-300">
-                        Charger 50 proverbes supplémentaires
-                    </button>
+                <div id="infinite-scroll-loader" class="text-center mt-8 p-4 hidden">
+                    <span class="loader loader-dark"></span>
                 </div>
 
                 <p id="no-results" class="text-center text-2xl text-[var(--color-text-light)] mt-12 hidden font-serif p-4 border border-dashed rounded-lg">
@@ -400,7 +394,7 @@
             <span class="text-xs font-semibold">Quiz</span>
         </button>
     </nav>
-
+    
     <div id="toast" role="status" aria-live="polite" class="fixed bottom-[-100px] left-1/2 -translate-x-1/2 bg-green-700 text-white py-2 px-5 rounded-full shadow-xl opacity-0 z-[1000]">
         <p>Message</p>
     </div>
@@ -412,810 +406,709 @@
     <div id="modal-backdrop" class="fixed inset-0 bg-black/60 z-[100] opacity-0 pointer-events-none transition-opacity duration-300"></div>
     <div id="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-2xl max-h-[85vh] bg-[var(--color-bg-card)] rounded-lg shadow-2xl z-[101] opacity-0 scale-95 pointer-events-none transition-all duration-300 flex flex-col">
         <header class="flex-shrink-0 p-6 pb-4 pr-12 border-b border-[var(--color-border)]">
-            <h2 id="modal-title" class="text-2xl font-serif text-[var(--color-heading)]"></h2>
+             <h2 id="modal-title" class="text-2xl font-serif text-[var(--color-heading)]"></h2>
         </header>
         <div id="modal-body" class="prose max-w-none text-[var(--color-text)] p-6 overflow-y-auto"></div>
         <button id="modal-close-btn" aria-label="Fermer la modale" class="absolute top-4 right-4 text-gray-400 hover:text-[var(--color-heading)] transition-colors z-20 p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- CONSTANTES & ÉLÉMENTS DU DOM ---
+            const PROVERBS_PER_PAGE = 50;
             const dom = {
+                html: document.documentElement,
                 splashScreen: document.getElementById('splash-screen'),
-                themeToggle: document.getElementById('theme-toggle'),
-                themeIconLight: document.getElementById('theme-icon-light'),
-                themeIconDark: document.getElementById('theme-icon-dark'),
-                tabs: document.querySelectorAll('[data-tab]'),
-                navButtons: document.querySelectorAll('.nav-btn'),
-                accueilTab: document.getElementById('accueil-tab'),
-                explorerTab: document.getElementById('explorer-tab'),
-                favorisTab: document.getElementById('favoris-tab'),
-                aiSageTab: document.getElementById('ai-sage-tab'),
-                quizTab: document.getElementById('quiz-tab'),
-                proverbOfTheDayCard: document.getElementById('proverb-of-the-day-card'),
-                searchContainer: document.getElementById('search-container'),
                 searchInput: document.getElementById('search-input'),
-                randomBtn: document.getElementById('random-btn'),
-                themeListContainer: document.getElementById('theme-list-container'),
+                clearSearchBtn: document.querySelector('.clear-search-btn'),
                 resultsContainer: document.getElementById('results-container'),
                 resultsFeedback: document.getElementById('results-feedback'),
                 initialLoadMessage: document.getElementById('initial-load-message'),
-                loadMoreBtn: document.getElementById('load-more-btn'),
-                noResults: document.getElementById('no-results'),
+                loaderContainer: document.getElementById('infinite-scroll-loader'),
                 favoritesContainer: document.getElementById('favorites-container'),
+                noResults: document.getElementById('no-results'),
                 noFavorites: document.getElementById('no-favorites'),
                 goToExplorerBtn: document.getElementById('go-to-explorer-btn'),
-                aiContextInput: document.getElementById('ai-context-input'),
-                aiSuggestBtn: document.getElementById('ai-suggest-btn'),
-                aiResultFeedback: document.getElementById('ai-result-feedback'),
-                quizContainer: document.getElementById('quiz-container'),
                 toast: document.getElementById('toast'),
-                backToTop: document.getElementById('back-to-top'),
-                modalBackdrop: document.getElementById('modal-backdrop'),
-                modalContent: document.getElementById('modal-content'),
-                modalTitle: document.getElementById('modal-title'),
-                modalBody: document.getElementById('modal-body'),
-                modalCloseBtn: document.getElementById('modal-close-btn'),
+                proverbOfTheDayCard: document.getElementById('proverb-of-the-day-card'),
+                randomBtn: document.getElementById('random-btn'),
+                backToTopBtn: document.getElementById('back-to-top'),
+                themeListContainer: document.getElementById('theme-list-container'),
+                navButtons: document.querySelectorAll('.nav-btn'),
+                tabContents: document.querySelectorAll('.tab-content'),
+                quizContainer: document.getElementById('quiz-container'),
                 aboutBtn: document.getElementById('about-btn'),
-                clearSearchBtn: document.querySelector('.clear-search-btn')
-            };
-
-            let allProverbs = [];
-            let currentProverbs = [];
-            let favorites = JSON.parse(localStorage.getItem('kabyle_proverbs_favorites')) || [];
-            let currentPage = 0;
-            const CHUNK_SIZE = 50;
-            let currentThemeFilter = '';
-            let currentSearchTerm = '';
-            let allThemes = [];
-
-            // --- Theme Toggle ---
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-
-            const applyTheme = (isDark) => {
-                document.documentElement.classList.toggle('dark', isDark);
-                dom.themeIconLight.classList.toggle('hidden', isDark);
-                dom.themeIconDark.classList.toggle('hidden', !isDark);
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            };
-
-            const initialTheme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
-            applyTheme(initialTheme === 'dark');
-            prefersDark.addListener((e) => applyTheme(e.matches)); // Fallback listener
-
-            dom.themeToggle.addEventListener('click', () => {
-                const isDark = document.documentElement.classList.contains('dark');
-                applyTheme(!isDark);
-            });
-
-            // --- Navigation / Tabs ---
-            const switchTab = (tabId) => {
-                // Hide all tab content
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                // Show selected tab content
-                document.getElementById(tabId).classList.add('active');
-
-                // Deactivate all nav buttons
-                dom.navButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                // Activate the corresponding nav button
-                document.querySelectorAll(`[data-tab="${tabId}"]`).forEach(btn => {
-                    btn.classList.add('active');
-                });
-
-                // Special logic for tabs
-                if (tabId === 'explorer-tab') {
-                    handleExplorerTabOpen();
-                } else if (tabId === 'favoris-tab') {
-                    renderFavorites();
-                } else if (tabId === 'quiz-tab') {
-                    generateQuiz();
+                themeToggle: document.getElementById('theme-toggle'),
+                themeIcons: { light: document.getElementById('theme-icon-light'), dark: document.getElementById('theme-icon-dark') },
+                modal: {
+                    backdrop: document.getElementById('modal-backdrop'),
+                    content: document.getElementById('modal-content'),
+                    title: document.getElementById('modal-title'),
+                    body: document.getElementById('modal-body'),
+                    closeBtn: document.getElementById('modal-close-btn'),
+                },
+                ai: {
+                    contextInput: document.getElementById('ai-context-input'),
+                    suggestBtn: document.getElementById('ai-suggest-btn'),
+                    resultFeedback: document.getElementById('ai-result-feedback'),
                 }
             };
 
-            // Set initial tab
-            const initialTab = dom.accueilTab.id;
-            switchTab(initialTab);
-
-            dom.tabs.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    switchTab(e.currentTarget.dataset.tab);
-                });
-            });
-            
-            dom.goToExplorerBtn.addEventListener('click', () => switchTab('explorer-tab'));
-
-            // --- Utility Functions ---
-
-            // Simple debounce utility
-            const debounce = (func, delay) => {
-                let timeoutId;
-                return function(...args) {
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => func.apply(this, args), delay);
-                };
+            // --- ÉTAT GLOBAL DE L'APPLICATION ---
+            const state = {
+                activeTheme: 'tous',
+                searchTimeout: null,
+                proverbs: [],
+                favorites: new Set(JSON.parse(localStorage.getItem('inzan_favorites')) || []),
+                trapFocusHandler: null,
+                isCoreDataLoaded: false,
+                currentPage: 0,
+                displayedProverbs: [],
+                isLoading: false,
+                totalFilteredCount: 0
             };
             
-            // Highlight utility for search results
-            const highlightText = (text, term) => {
-                if (!term) return text;
-                const regex = new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-                return text.replace(regex, '<span class="search-highlight">$1</span>');
+            // --- FONCTIONS UTILITAIRES ---
+            const normalizeText = (text) => {
+                if (!text) return '';
+                return text
+                    .toLowerCase()
+                    .replace(/ǧ/g, 'g')
+                    .replace(/č/g, 'c')
+                    .replace(/ṣ/g, 's')
+                    .replace(/ṭ/g, 't')
+                    .replace(/ẓ/g, 'z')
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .trim();
             };
 
-            // Notification/Toast
+            const debounce = (func, delay) => (...args) => {
+                clearTimeout(state.searchTimeout);
+                state.searchTimeout = setTimeout(() => func(...args), delay);
+            };
+            
+            const renderMarkdown = (text) => {
+                let html = text.trim();
+                html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+                html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+                html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+                html = html.replace(/^\* (.*$)/gim, '<li>$1</li>').replace(/(\<\/li\>)?\n<li>/gim, '</li><li>').replace(/^(<li>.*<\/li>)$/gim, '<ul>$1</ul>');
+                return html.split('\n\n').map(p => {
+                    if (p.startsWith('<ul>') || p.startsWith('<h3>')) return p;
+                    return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+                }).join('');
+            };
+
             const showToast = (message, isError = false) => {
-                dom.toast.textContent = message;
-                dom.toast.style.backgroundColor = isError ? '#dc2626' : 'var(--color-secondary)'; // red-600 vs primary
-                dom.toast.classList.remove('bottom-[-100px]', 'opacity-0');
-                dom.toast.classList.add('bottom-10', 'opacity-1');
-
-                setTimeout(() => {
-                    dom.toast.classList.remove('bottom-10', 'opacity-1');
-                    dom.toast.classList.add('bottom-[-100px]', 'opacity-0');
-                }, 3000);
+                dom.toast.querySelector('p').textContent = message;
+                dom.toast.className = `fixed bottom-[-100px] left-1/2 -translate-x-1/2 text-white py-2 px-5 rounded-full shadow-xl opacity-0 z-[1000] ${isError ? 'bg-red-600' : 'bg-green-700'}`;
+                requestAnimationFrame(() => {
+                    dom.toast.classList.add('bottom-28', 'sm:bottom-10', 'opacity-100');
+                });
+                setTimeout(() => dom.toast.classList.remove('bottom-28', 'sm:bottom-10', 'opacity-100'), 3000);
             };
 
-            // --- Modal Handler ---
-            const openModal = (title, content) => {
-                dom.modalTitle.textContent = title;
-                dom.modalBody.innerHTML = content;
-                dom.modalBackdrop.classList.add('visible');
-                dom.modalContent.classList.add('visible');
-                document.body.style.overflow = 'hidden'; // Prevent body scroll
-                dom.modalContent.focus();
+            const highlightText = (text, query) => {
+                if (!query) return text;
+                const normalizedQuery = normalizeText(query);
+                if (!normalizedQuery) return text;
+                // Split query into words and highlight each one
+                const keywords = normalizedQuery.split(' ').filter(k => k.length > 0);
+                if (keywords.length === 0) return text;
+
+                const regex = new RegExp(`(${keywords.join('|')})`, 'gi');
+                return text.replace(regex, `<span class="search-highlight">$1</span>`);
             };
-
-            const closeModal = () => {
-                dom.modalBackdrop.classList.remove('visible');
-                dom.modalContent.classList.remove('visible');
-                document.body.style.overflow = '';
-            };
-
-            dom.modalCloseBtn.addEventListener('click', closeModal);
-            dom.modalBackdrop.addEventListener('click', closeModal);
-            dom.modalContent.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeModal();
-            });
-
-
-            // --- Core HTML Generation ---
-
-            const createProverbCardHTML = (proverb, isDailyProverb = false, highlightTerm = '') => {
-                // Sécurité: Si le proverbe n'a pas de contenu principal
-                if (!proverb || !proverb.proverbe) {
-                    return '';
-                }
-
-                const isFavorite = favorites.includes(proverb.id);
-                const favClass = isFavorite ? 'favorited' : '';
-                
-                // CORRECTION DE L'ERREUR PRÉCÉDENTE: Uncaught TypeError: Cannot read properties of undefined (reading 'split')
-                const themesHTML = (proverb.theme || '')
-                    .split(',')
-                    .map(theme => {
-                        const cleanTheme = theme.trim();
-                        if (!cleanTheme) return '';
-                        
-                        const highlightedTheme = highlightTerm && cleanTheme.toLowerCase().includes(highlightTerm.toLowerCase()) 
-                            ? `<span class="search-highlight">${cleanTheme}</span>` 
-                            : cleanTheme;
-
-                        return `
-                            <button class="card-theme-badge text-xs font-medium px-3 py-1 bg-[var(--color-bg-alt)] text-[var(--color-secondary)] rounded-full hover:bg-[var(--color-primary)] hover:text-white transition-colors duration-200" data-theme="${cleanTheme}">
-                                ${highlightedTheme}
-                            </button>
-                        `;
-                    })
-                    .join('');
-
-                const explanationHTML = proverb.explication ? `
-                    <div class="mt-4 pt-4 border-t border-[var(--color-border)]">
-                        <h4 class="text-base font-serif font-bold text-[var(--color-primary)] mb-2">Explication:</h4>
-                        <p class="text-sm text-[var(--color-text)] leading-relaxed">${highlightText(proverb.explication, highlightTerm)}</p>
-                    </div>
-                ` : '';
-                
-                const cardClasses = isDailyProverb 
-                    ? 'bg-[var(--color-bg-card)] p-6 rounded-xl shadow-2xl border-t-8 border-[var(--color-accent)]' 
-                    : 'bg-[var(--color-bg-card)] p-5 rounded-xl shadow-lg border border-[var(--color-border)] hover:shadow-xl transition-shadow duration-300';
-                
-                return `
-                    <div class="proverb-card ${cardClasses} fade-in" data-id="${proverb.id}" style="animation-delay: ${Math.random() * 0.2}s;">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-lg md:text-xl font-serif font-bold text-[var(--color-heading)] leading-snug pr-4">
-                                ${highlightText(proverb.proverbe, highlightTerm)}
-                            </h3>
-                            <button class="favorite-btn flex-shrink-0 p-2 rounded-full hover:bg-[var(--color-bg-alt)] text-[var(--color-text-light)] hover:text-pink-500 ${favClass}" data-id="${proverb.id}" aria-label="Ajouter aux favoris">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="${isFavorite ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                            </button>
-                        </div>
-                        
-                        <div class="flex flex-wrap gap-2 mb-2">
-                            ${themesHTML}
-                        </div>
-                        
-                        ${explanationHTML}
-                        
-                        <button class="action-btn text-sm font-semibold text-[var(--color-primary)] mt-3 hover:text-[var(--color-accent)] transition-colors duration-200 flex items-center gap-1" data-id="${proverb.id}" data-action="details">
-                            Détails & Suggestions AI
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </button>
-                    </div>
-                `;
-            };
-
-            // --- Explorer Functionality ---
             
-            const filterProverbs = (proverbs, search, theme) => {
-                const lowerSearch = search.toLowerCase();
-                const lowerTheme = theme.toLowerCase();
+            // --- RENDU UI DYNAMIQUE ---
+            const createProverbCardHTML = (proverb, isDaily = false, query = '') => {
+                if (!proverb) return '';
+                const themes = proverb.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean);
+                const themesHtml = themes.map(theme => `<button class="card-theme-badge px-2 py-1 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)]" data-theme="${normalizeText(theme)}">${theme.charAt(0).toUpperCase() + theme.slice(1).toLowerCase()}</button>`).join('');
+                
+                const cardClasses = isDaily 
+                    ? `bg-[var(--color-bg-card)] p-6 rounded-xl shadow-2xl border-t-8 border-[var(--color-accent)]` 
+                    : `stagger-in bg-[var(--color-bg-card)] p-5 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col border-l-4 border-[var(--color-primary)]`;
+                
+                const isFavorited = state.favorites.has(proverb.id);
 
-                return proverbs.filter(p => {
-                    const matchesSearch = !search || 
-                        p.proverbe.toLowerCase().includes(lowerSearch) || 
-                        (p.explication && p.explication.toLowerCase().includes(lowerSearch));
-                    
-                    const matchesTheme = !theme || 
-                        (p.theme && p.theme.toLowerCase().split(',').map(t => t.trim()).includes(lowerTheme));
-                    
-                    return matchesSearch && matchesTheme;
-                });
+                return `<div class="${cardClasses}" id="proverb-${proverb.id}" data-id="${proverb.id}">
+                            <div class="flex-grow">
+                                <p class="text-xl font-serif font-bold text-[var(--color-heading)] mb-2 italic">« ${highlightText(proverb.kabyle, query)} »</p>
+                                <p class="text-[var(--color-text)] text-lg mb-4 border-b border-[var(--color-border)] pb-3 font-light">— ${highlightText(proverb.francais, query)}</p>
+                                <div class="flex flex-wrap gap-2 items-center min-h-[30px]">${themesHtml}</div>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-[var(--color-border)] flex justify-between items-center gap-2">
+                               <button class="explain-btn text-xs font-semibold text-[var(--color-text-light)] hover:text-[var(--color-primary)] transition-colors">Expliquer ✨</button>
+                               <div class="flex items-center gap-1 text-[var(--color-text-light)]">
+                                    <button class="action-btn favorite-btn ${isFavorited ? 'favorited' : ''} p-1 hover:text-pink-500" aria-label="Ajouter aux favoris">
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                                    </button>
+                                    <button class="action-btn copy-btn p-1 hover:text-[var(--color-primary)]" aria-label="Copier le proverbe">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    </button>
+                                    <button class="action-btn share-btn p-1 hover:text-[var(--color-primary)]" aria-label="Partager le proverbe">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.367a3 3 0 105.367 2.684 3 3 0 00-5.367 2.684z" /></svg>
+                                    </button>
+                               </div>
+                            </div>
+                        </div>`;
             };
-
-            const renderChunk = (chunk, isNewSearch = false) => {
-                if (isNewSearch) {
-                    dom.resultsContainer.innerHTML = '';
-                    dom.resultsContainer.scrollTop = 0;
-                }
-
-                chunk.forEach(proverb => {
-                    const cardHTML = createProverbCardHTML(proverb, false, currentSearchTerm);
-                    dom.resultsContainer.insertAdjacentHTML('beforeend', cardHTML);
-                });
-
-                if (currentProverbs.length > (currentPage + 1) * CHUNK_SIZE) {
-                    dom.loadMoreBtn.classList.remove('hidden');
-                    dom.loadMoreBtn.classList.remove('loading');
-                    dom.loadMoreBtn.disabled = false;
-                    dom.loadMoreBtn.textContent = `Charger ${Math.min(CHUNK_SIZE, currentProverbs.length - (currentPage + 1) * CHUNK_SIZE)} proverbes supplémentaires`;
+            
+            const renderChunk = (container, proverbs, query, append = true) => {
+                const chunkHtml = proverbs.map((p, i) => {
+                    const cardHTML = createProverbCardHTML(p, false, query);
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = cardHTML;
+                    const cardElement = wrapper.firstElementChild;
+                    cardElement.style.animationDelay = `${i * 50}ms`;
+                    return cardElement.outerHTML;
+                }).join('');
+                
+                if (append) {
+                    container.insertAdjacentHTML('beforeend', chunkHtml);
                 } else {
-                    dom.loadMoreBtn.classList.add('hidden');
+                    container.innerHTML = chunkHtml;
                 }
-
-                currentPage++;
-            };
-            
-            const loadNextChunk = () => {
-                const start = currentPage * CHUNK_SIZE;
-                const end = start + CHUNK_SIZE;
-                const chunk = currentProverbs.slice(start, end);
-
-                if (chunk.length > 0) {
-                    renderChunk(chunk);
-                }
-            };
-            
-            const updateResults = (isNewSearch = true) => {
-                const filteredProverbs = filterProverbs(allProverbs, currentSearchTerm, currentThemeFilter);
-                currentProverbs = filteredProverbs;
-                currentPage = 0; // Reset page on new search/filter
-
-                dom.initialLoadMessage.classList.add('hidden');
-                
-                if (currentProverbs.length === 0) {
-                    dom.resultsContainer.innerHTML = '';
-                    dom.resultsFeedback.textContent = '';
-                    dom.loadMoreBtn.classList.add('hidden');
-                    dom.noResults.classList.remove('hidden');
-                    return;
-                }
-
-                dom.noResults.classList.add('hidden');
-                dom.resultsFeedback.textContent = `${currentProverbs.length} proverbe(s) trouvé(s).`;
-                renderChunk(currentProverbs.slice(0, CHUNK_SIZE), true);
-                
-                // Highlight active theme filter pill
-                dom.themeListContainer.querySelectorAll('.theme-pill-button').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.theme.toLowerCase() === currentThemeFilter.toLowerCase());
-                });
-            };
-
-            dom.searchInput.addEventListener('input', debounce(() => {
-                currentSearchTerm = dom.searchInput.value.trim();
-                updateResults();
-            }, 300));
-            
-            dom.clearSearchBtn.addEventListener('click', () => {
-                dom.searchInput.value = '';
-                currentSearchTerm = '';
-                updateResults();
-            });
-
-            dom.loadMoreBtn.addEventListener('click', () => {
-                dom.loadMoreBtn.classList.add('loading');
-                dom.loadMoreBtn.disabled = true;
-                // Use a small delay for visual feedback
-                setTimeout(loadNextChunk, 200);
-            });
-            
-            const handleThemeFilter = (theme) => {
-                currentThemeFilter = theme;
-                updateResults();
             };
 
             const updateAvailableThemes = () => {
-                dom.themeListContainer.innerHTML = '';
-                // 1. Collect all unique themes
-                allThemes = Array.from(new Set(
-                    allProverbs.flatMap(p => (p.theme || '').split(','))
-                        .map(t => t.trim())
-                        .filter(t => t.length > 0)
-                )).sort();
-                
-                // 2. Add 'Tout' button
-                const allButton = `<button class="theme-pill-button active text-sm font-semibold px-3 py-1 bg-[var(--color-primary)] text-white rounded-full transition-all duration-200" data-theme="">Tout</button>`;
-                dom.themeListContainer.insertAdjacentHTML('beforeend', allButton);
+                if (state.displayedProverbs.length === 0) {
+                     dom.themeListContainer.innerHTML = `<p class="text-sm text-[var(--color-text-light)]">Recherchez pour voir les thèmes.</p>`;
+                     return;
+                }
+                const allThemesRaw = state.displayedProverbs.flatMap(p => p.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean));
+                const uniqueNormalizedThemes = [...new Map(allThemesRaw.map(t => [normalizeText(t), t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()])).entries()];
+                uniqueNormalizedThemes.sort((a, b) => a[1].localeCompare(b[1]));
 
-                // 3. Add theme buttons
-                allThemes.forEach(theme => {
-                    const buttonHTML = `
-                        <button class="theme-pill-button text-sm font-semibold px-3 py-1 text-[var(--color-text)] bg-[var(--color-bg-alt)] rounded-full hover:bg-[var(--color-primary)] hover:text-white transition-all duration-200" data-theme="${theme}">
-                            ${theme}
-                        </button>
-                    `;
-                    dom.themeListContainer.insertAdjacentHTML('beforeend', buttonHTML);
-                });
+                dom.themeListContainer.innerHTML = `<button class="theme-pill-button flex-shrink-0 px-4 py-2 rounded-full bg-[var(--color-bg-alt)] shadow-sm cursor-pointer font-medium text-sm text-[var(--color-text)] hover:bg-[var(--color-primary)]/20" data-theme="tous">Tous</button>` + uniqueNormalizedThemes.map(([norm, disp]) => `<button class="theme-pill-button flex-shrink-0 px-4 py-2 rounded-full bg-[var(--color-bg-alt)] shadow-sm cursor-pointer font-medium text-sm text-[var(--color-text)] hover:bg-[var(--color-primary)]/20" data-theme="${norm}">${disp}</button>`).join('');
                 
-                // 4. Attach click listener (delegation)
-                dom.themeListContainer.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.theme-pill-button');
-                    if (btn) {
-                        const newTheme = btn.dataset.theme;
-                        handleThemeFilter(newTheme);
-                        // Update active state manually for 'Tout' and others
-                        dom.themeListContainer.querySelectorAll('.theme-pill-button').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                    }
-                });
-                
-                // 5. Add click listener for card themes (delegation on results container)
-                dom.resultsContainer.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.card-theme-badge');
-                    if (btn) {
-                        const theme = btn.dataset.theme;
-                        // Switch to explorer tab and apply filter
-                        switchTab('explorer-tab');
-                        handleThemeFilter(theme);
-                        currentSearchTerm = '';
-                        dom.searchInput.value = '';
-                    }
-                });
-                
-                // Initial update for theme list to match current filter (should be empty initially)
-                dom.themeListContainer.querySelector('[data-theme=""]').classList.add('active');
+                const activeThemeButton = dom.themeListContainer.querySelector(`[data-theme="${state.activeTheme}"]`);
+                if (activeThemeButton) {
+                    activeThemeButton.classList.add('active');
+                } else {
+                    dom.themeListContainer.querySelector('[data-theme="tous"]').classList.add('active');
+                }
             };
 
-            const handleExplorerTabOpen = () => {
-                 // On first load, nothing happens here. Subsequent loads just show the current state.
-                 // We don't re-render unless a filter/search changes.
+            // --- LOGIQUE DE L'ONGLET EXPLORER (FILTRES/PAGINATION) ---
+            const filterProverbs = () => {
+                if (!state.isCoreDataLoaded) return [];
+
+                const query = dom.searchInput.value;
+                const normalizedQuery = normalizeText(query);
+                
+                const hasSearchTerm = normalizedQuery.length > 0;
+                const hasThemeFilter = state.activeTheme !== 'tous';
+                
+                if (!hasSearchTerm && !hasThemeFilter) return [];
+                
+                const keywords = normalizedQuery.split(' ').filter(k => k.length > 0);
+
+                return state.proverbs.filter(p => {
+                    const themeMatch = !hasThemeFilter || p.theme_norm.includes(state.activeTheme);
+                    if (!themeMatch) return false;
+
+                    const queryMatch = !hasSearchTerm || keywords.every(keyword => 
+                        `${p.kabyle_norm} ${p.francais_norm} ${p.theme_norm}`.includes(keyword)
+                    );
+                    return queryMatch;
+                });
+            };
+
+            const loadNextChunk = (reset = false) => {
+                if (state.isLoading || !state.isCoreDataLoaded) return;
+                
+                const isSearching = dom.searchInput.value.trim().length > 0 || state.activeTheme !== 'tous';
+
+                if (reset) {
+                    state.currentPage = 0;
+                    state.displayedProverbs = [];
+                    dom.resultsContainer.innerHTML = '';
+                    window.scrollTo(0, 0);
+                    dom.initialLoadMessage.classList.add('hidden');
+                }
+                
+                // If not searching and resetting, don't load anything.
+                if (reset && !isSearching) {
+                    dom.initialLoadMessage.classList.remove('hidden');
+                    dom.resultsFeedback.textContent = '';
+                    dom.noResults.classList.add('hidden');
+                    dom.loaderContainer.classList.add('hidden');
+                    return;
+                }
+
+                // Check if we are already at the end before proceeding
+                if (!reset && state.displayedProverbs.length >= state.totalFilteredCount) {
+                    dom.loaderContainer.classList.add('hidden');
+                    return;
+                }
+
+                state.isLoading = true;
+                dom.loaderContainer.classList.remove('hidden');
+
+                setTimeout(() => {
+                    const filteredProverbs = filterProverbs();
+                    
+                    if (reset) {
+                        state.totalFilteredCount = filteredProverbs.length;
+                    }
+
+                    const startIndex = state.currentPage * PROVERBS_PER_PAGE;
+                    const endIndex = startIndex + PROVERBS_PER_PAGE;
+                    const chunkToLoad = filteredProverbs.slice(startIndex, endIndex);
+
+                    if (chunkToLoad.length === 0 && reset) {
+                        dom.noResults.classList.remove('hidden');
+                        dom.resultsFeedback.textContent = '';
+                    } else {
+                        dom.noResults.classList.add('hidden');
+                        dom.resultsFeedback.textContent = `Affichage de ${Math.min(state.displayedProverbs.length + chunkToLoad.length, state.totalFilteredCount)} sur ${state.totalFilteredCount} proverbes`;
+                    }
+
+                    renderChunk(dom.resultsContainer, chunkToLoad, dom.searchInput.value, true);
+                    
+                    state.displayedProverbs.push(...chunkToLoad);
+                    state.currentPage++;
+                    
+                    if (reset) {
+                        updateAvailableThemes();
+                    }
+
+                    if (state.displayedProverbs.length >= state.totalFilteredCount) {
+                        dom.loaderContainer.classList.add('hidden');
+                    }
+                    
+                    state.isLoading = false;
+                }, 150);
+            };
+
+            // --- FONCTIONS D'AFFICHAGE ET DE NAVIGATION ---
+            const renderFavorites = () => {
+                if (!state.isCoreDataLoaded) {
+                    dom.favoritesContainer.innerHTML = `<div class="md:col-span-2 xl:col-span-3 text-center p-8 text-[var(--color-text-light)]"><span class="loader loader-dark"></span> <p class="mt-2">Chargement des données en cours...</p></div>`;
+                    return;
+                }
+                const favoriteProverbs = state.proverbs.filter(p => state.favorites.has(p.id));
+                dom.noFavorites.classList.toggle('hidden', favoriteProverbs.length > 0);
+                renderChunk(dom.favoritesContainer, favoriteProverbs, '', false);
             };
             
-            // --- Random Proverb ---
-            dom.randomBtn.addEventListener('click', () => {
-                if (allProverbs.length === 0) return;
-                const randomIndex = Math.floor(Math.random() * allProverbs.length);
-                const randomProverb = allProverbs[randomIndex];
-                
-                const proverbDetails = generateProverbDetailsHTML(randomProverb, true);
-                openModal(`Proverbe Aléatoire 🎲`, proverbDetails);
-            });
+            const resetThemeFilter = (update = true) => {
+                state.activeTheme = 'tous';
+                sessionStorage.setItem('inzan_theme_filter', 'tous');
+                dom.themeListContainer.querySelector('.active')?.classList.remove('active');
+                const tousButton = dom.themeListContainer.querySelector('[data-theme="tous"]');
+                if (tousButton) {
+                    tousButton.classList.add('active');
+                    tousButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+                if(update) loadNextChunk(true);
+            };
 
-            // --- Favorites Management ---
-            const saveFavorites = () => {
-                localStorage.setItem('kabyle_proverbs_favorites', JSON.stringify(favorites));
-                // Re-render favorites if on that tab
+            const setActiveTab = (tabId) => {
+                if (['quiz-tab', 'ai-sage-tab'].includes(tabId) && !state.isCoreDataLoaded) {
+                    showToast("Les données de base ne sont pas encore chargées.", true);
+                    return;
+                }
+
+                dom.tabContents.forEach(content => content.classList.toggle('active', content.id === tabId));
+                dom.navButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === tabId));
+                
+                if (tabId === 'favoris-tab') renderFavorites();
+                if (tabId === 'quiz-tab' && state.isCoreDataLoaded && !dom.quizContainer.querySelector('#next-quiz-btn')) startQuiz();
+
+                if (document.body.clientWidth < 640) window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const toggleFavorite = (id) => {
+                const isFavorited = state.favorites.has(id);
+                if (isFavorited) {
+                    state.favorites.delete(id);
+                    showToast("💔 Retiré des favoris", true);
+                } else {
+                    state.favorites.add(id);
+                    showToast("❤️ Ajouté aux favoris !");
+                }
+                localStorage.setItem('inzan_favorites', JSON.stringify([...state.favorites]));
+                
+                document.querySelectorAll(`#proverb-${id} .favorite-btn`).forEach(btn => {
+                    btn.classList.toggle('favorited', !isFavorited);
+                });
+
                 if (document.getElementById('favoris-tab').classList.contains('active')) {
                     renderFavorites();
                 }
             };
             
-            const toggleFavorite = (id) => {
-                const idNum = parseInt(id);
-                const index = favorites.indexOf(idNum);
-                if (index > -1) {
-                    favorites.splice(index, 1);
-                    showToast('Proverbe retiré des favoris.');
-                } else {
-                    favorites.push(idNum);
-                    showToast('Proverbe ajouté aux favoris ! ❤️');
-                }
-                saveFavorites();
-            };
+            // --- MODALE ET LOGIQUE API ---
+            const openModal = (title, bodyContent) => {
+                dom.modal.title.textContent = title;
+                dom.modal.body.innerHTML = bodyContent;
+                dom.modal.backdrop.classList.add('visible');
+                dom.modal.content.classList.add('visible');
+                document.body.style.overflow = 'hidden';
 
-            const renderFavorites = () => {
-                const favoriteProverbs = allProverbs.filter(p => favorites.includes(p.id));
-
-                dom.favoritesContainer.innerHTML = '';
-
-                if (favoriteProverbs.length === 0) {
-                    dom.noFavorites.classList.remove('hidden');
-                    return;
-                }
+                const focusableElements = dom.modal.content.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
                 
-                dom.noFavorites.classList.add('hidden');
-                
-                favoriteProverbs.forEach(proverb => {
-                    dom.favoritesContainer.insertAdjacentHTML('beforeend', createProverbCardHTML(proverb));
-                });
-            };
+                firstElement?.focus();
 
-            // Event delegation for favorite buttons in results, favorites, and daily card
-            document.addEventListener('click', (e) => {
-                const favBtn = e.target.closest('.favorite-btn');
-                if (favBtn) {
-                    e.preventDefault();
-                    e.stopPropagation(); // Prevent card action if it was a nested click
-                    const id = favBtn.dataset.id;
-                    toggleFavorite(id);
-                    // Update the clicked button's state
-                    favBtn.classList.toggle('favorited', favorites.includes(parseInt(id)));
-                    favBtn.querySelector('svg').style.fill = favorites.includes(parseInt(id)) ? 'currentColor' : 'none';
-                }
-            });
-
-
-            // --- Details & AI Suggestions (Modal Content) ---
-            const generateProverbDetailsHTML = (proverb, isRandom = false) => {
-                const detailsHTML = `
-                    <h3>Proverbe</h3>
-                    <p class="text-xl font-serif font-bold text-[var(--color-heading)]">${proverb.proverbe}</p>
-                    
-                    ${proverb.explication ? `
-                        <h3>Explication Détaillée</h3>
-                        <p>${proverb.explication}</p>
-                    ` : `
-                        <h3>Explication</h3>
-                        <p class="text-[var(--color-text-light)]">Désolé, aucune explication détaillée n'est disponible pour ce proverbe dans notre base de données. </p>
-                    `}
-                    
-                    <h3>Thèmes Associés</h3>
-                    <div class="flex flex-wrap gap-2">
-                        ${(proverb.theme || '').split(',').filter(t => t.trim().length > 0).map(t => `
-                            <button class="card-theme-badge text-sm font-medium px-3 py-1 bg-[var(--color-primary)] text-white rounded-full" data-theme="${t.trim()}">
-                                ${t.trim()}
-                            </button>
-                        `).join('')}
-                    </div>
-                    
-                    ${proverb.suggestion_ai ? `
-                        <div class="mt-8 p-4 bg-[var(--color-bg-alt)] rounded-lg border-l-4 border-[var(--color-secondary)]">
-                            <h3>Conseil du Sage AI 🤖</h3>
-                            <p>${proverb.suggestion_ai}</p>
-                        </div>
-                    ` : `
-                        <div class="mt-8 p-4 bg-[var(--color-bg-alt)] rounded-lg border-l-4 border-[var(--color-accent)]">
-                             <h3>Conseil du Sage AI 🤖</h3>
-                            <p class="text-[var(--color-text-light)]">Le Sage AI n'a pas encore fourni d'interprétation pour ce proverbe. Vous pouvez utiliser l'onglet "Sage AI" pour en générer une.</p>
-                        </div>
-                    `}
-                `;
-                return detailsHTML;
-            };
-
-            document.addEventListener('click', (e) => {
-                const detailBtn = e.target.closest('.action-btn[data-action="details"]');
-                if (detailBtn) {
-                    e.preventDefault();
-                    const id = parseInt(detailBtn.dataset.id);
-                    const proverb = allProverbs.find(p => p.id === id);
-                    if (proverb) {
-                        const proverbDetails = generateProverbDetailsHTML(proverb);
-                        openModal('Détails du Proverbe', proverbDetails);
+                state.trapFocusHandler = (e) => {
+                    if (e.key === 'Tab') {
+                        if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } } 
+                        else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } }
+                    } else if (e.key === 'Escape') {
+                        closeModal();
                     }
-                }
-                
-                // Also handle card theme clicks inside modal
-                const themeBadge = e.target.closest('#modal-body .card-theme-badge');
-                 if (themeBadge) {
-                    e.preventDefault();
-                    closeModal();
-                    switchTab('explorer-tab');
-                    handleThemeFilter(themeBadge.dataset.theme);
-                    currentSearchTerm = '';
-                    dom.searchInput.value = '';
-                }
-            });
+                };
+                document.addEventListener('keydown', state.trapFocusHandler);
+            };
 
-            // --- AI Sage Tab Logic ---
-            dom.aiSuggestBtn.addEventListener('click', async () => {
-                const context = dom.aiContextInput.value.trim();
-                if (context.length < 10) {
-                    dom.aiResultFeedback.innerHTML = '<p class="text-red-500 font-semibold">Veuillez décrire votre situation plus en détail (minimum 10 caractères).</p>';
-                    return;
+            const closeModal = () => {
+                dom.modal.backdrop.classList.remove('visible');
+                dom.modal.content.classList.remove('visible');
+                document.body.style.overflow = '';
+                if (state.trapFocusHandler) {
+                    document.removeEventListener('keydown', state.trapFocusHandler);
+                    state.trapFocusHandler = null;
                 }
-                
-                const originalBtnText = dom.aiSuggestBtn.innerHTML;
-                dom.aiSuggestBtn.disabled = true;
-                dom.aiSuggestBtn.innerHTML = '<span class="loader loader-dark"></span> Analyse en cours...';
-                dom.aiResultFeedback.innerHTML = '';
-                
-                // Simulation d'appel AI - REMPLACER AVEC L'API RÉELLE
-                await new Promise(resolve => setTimeout(resolve, 2000)); 
-                
-                // Simulation de la réponse AI
-                const suggestedProverbs = [
-                    allProverbs[Math.floor(Math.random() * allProverbs.length)],
-                    allProverbs[Math.floor(Math.random() * allProverbs.length)],
-                    allProverbs[Math.floor(Math.random() * allProverbs.length)],
-                ].filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i); // unique
-                
-                const responseHTML = `
-                    <div class="mt-4 p-4 bg-[var(--color-bg-card)] rounded-lg shadow-inner">
-                        <h3 class="text-xl font-serif font-bold text-[var(--color-primary)] mb-4">Réponse du Sage :</h3>
-                        <p class="mb-4">"Votre situation a été analysée. Voici les proverbes qui vous guideront :"</p>
-                        <div class="space-y-4">
-                            ${suggestedProverbs.map(p => `
-                                <div class="border border-[var(--color-border)] p-3 rounded-lg bg-[var(--color-bg-alt)]">
-                                    <p class="font-serif font-bold text-[var(--color-heading)]">${p.proverbe}</p>
-                                    <button class="action-btn text-sm font-semibold text-[var(--color-primary)] mt-1 hover:text-[var(--color-accent)] transition-colors duration-200 flex items-center gap-1" data-id="${p.id}" data-action="details">
-                                        Voir les détails
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                
-                dom.aiResultFeedback.innerHTML = responseHTML;
-                dom.aiSuggestBtn.disabled = false;
-                dom.aiSuggestBtn.innerHTML = originalBtnText;
-            });
+            };
             
-            // --- Quiz Logic ---
-            let quizProverbs = [];
-            let currentQuiz = null;
-            let quizScore = 0;
-            let quizQuestionIndex = 0;
-            const QUIZ_LENGTH = 5; // Nombre de questions par quiz
+            const callGeminiAPI = async (payload, expectJson = false) => {
+                const GEMINI_API_KEY = "AIzaSyD3cGyEYYhNbFN6WlMKb5wjpdDqfR8RaN4";
+                if (!GEMINI_API_KEY) throw new Error("La clé API n'est pas configurée dans le code source.");
 
-            const generateQuizData = () => {
-                 // S'assurer d'avoir au moins 5 proverbes
-                if (allProverbs.length < QUIZ_LENGTH) {
-                    dom.quizContainer.innerHTML = '<p class="text-red-500 text-center">Base de données trop petite pour le Quiz.</p>';
-                    return;
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+                
+                if (expectJson) payload.generationConfig = { responseMimeType: "application/json" };
+
+                const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData?.error?.message || `Erreur HTTP ${response.status}`);
                 }
                 
-                // Sélectionner des proverbes aléatoires et uniques
-                const selectedProverbs = [];
-                const pool = [...allProverbs];
-                while(selectedProverbs.length < QUIZ_LENGTH && pool.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * pool.length);
-                    selectedProverbs.push(pool.splice(randomIndex, 1)[0]);
-                }
+                const result = await response.json();
+                const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!textResponse) throw new Error("Réponse de l'API malformée ou vide.");
                 
-                quizProverbs = selectedProverbs;
-                currentQuiz = [];
-                
-                quizProverbs.forEach(p => {
-                    const correctTheme = (p.theme || '').split(',')[0].trim();
-                    if (!correctTheme) return; // Skip if no theme
-                    
-                    // Trouver 3 autres thèmes uniques pour les mauvaises réponses
-                    const incorrectThemes = [];
-                    const themePool = [...allThemes].filter(t => t !== correctTheme);
-                    while(incorrectThemes.length < 3 && themePool.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * themePool.length);
-                        incorrectThemes.push(themePool.splice(randomIndex, 1)[0]);
-                    }
-                    
-                    const options = [correctTheme, ...incorrectThemes].filter(t => t.length > 0);
-                    // Shuffle options
-                    for (let i = options.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [options[i], options[j]] = [options[j], options[i]];
-                    }
-                    
-                    currentQuiz.push({
-                        proverbe: p.proverbe,
-                        correctAnswer: correctTheme,
-                        options: options
+                return expectJson ? JSON.parse(textResponse) : textResponse;
+            };
+
+            const getProverbExplanation = async (proverb) => {
+                openModal("Explication du Proverbe", `<div class="flex justify-center p-8"><span class="loader loader-dark"></span></div>`);
+                const systemPrompt = `Vous êtes un expert de la culture kabyle. Expliquez le proverbe suivant de manière claire. Structurez votre réponse en Markdown avec les titres: '### Signification littérale', '### Signification imagée', et '### Exemple d'utilisation'. Soyez concis et direct.`;
+                try {
+                    const explanation = await callGeminiAPI({
+                        contents: [{ parts: [{ text: `Explique ce proverbe kabyle : "${proverb.kabyle}" (qui se traduit par "${proverb.francais}")` }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
                     });
-                });
-                
-                // Filtrer les questions qui n'ont pas pu être générées (ex: pas assez d'options de thèmes)
-                currentQuiz = currentQuiz.filter(q => q.options.length === 4);
-                
-                quizScore = 0;
-                quizQuestionIndex = 0;
-                renderQuizQuestion();
+                    dom.modal.body.innerHTML = renderMarkdown(explanation);
+                } catch (error) {
+                    dom.modal.body.innerHTML = `<p class="text-red-500">Désolé, une erreur est survenue lors de la communication avec le Sage Artificiel. <br><strong>Détail :</strong> ${error.message}</p>`;
+                }
             };
             
-            const renderQuizQuestion = () => {
-                if (!currentQuiz || currentQuiz.length === 0 || quizQuestionIndex >= currentQuiz.length) {
-                    renderQuizResults();
+            const getAISuggestion = async (context) => {
+                dom.ai.suggestBtn.disabled = true;
+                dom.ai.suggestBtn.innerHTML = `<span class="loader"></span> <span>Analyse...</span>`;
+                dom.ai.resultFeedback.innerHTML = '';
+                
+                const rawProverbs = state.proverbs.map(({ kabyle, francais, theme, explication }, id) => ({ id, kabyle, francais, theme, explication }));
+                
+                const systemPrompt = `Vous êtes un sage kabyle expert en proverbes. Analysez la situation de l'utilisateur et choisissez jusqu'à 3 proverbes les plus pertinents à partir de la liste fournie. Vous devez OBLIGATOIREMENT répondre avec un objet JSON valide et rien d'autre.`;
+                const userPrompt = `Situation de l'utilisateur: "${context}"\n\nListe des proverbes disponibles (limité pour l'exemple):\n${JSON.stringify(rawProverbs.slice(0, 500))}\n\nChoisissez les proverbes les plus appropriés et répondez UNIQUEMENT avec un objet JSON au format suivant:\n{ "reasoning": "Votre analyse générale de la situation en une phrase.", "proverbs": [ { "id": <id_du_proverbe_1>, "justification": "Pourquoi ce proverbe est pertinent." } ] }`;
+                
+                try {
+                    const suggestion = await callGeminiAPI({
+                        contents: [{ parts: [{ text: userPrompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    }, true);
+
+                    if (!suggestion || !suggestion.proverbs || suggestion.proverbs.length === 0) {
+                        dom.ai.resultFeedback.innerHTML = `<p class="text-center text-[var(--color-text-light)]">Le sage n'a pas trouvé de proverbe parfaitement adapté. Essayez de reformuler.</p>`;
+                        return;
+                    }
+
+                    let htmlResult = `<p class="text-center italic text-[var(--color-text-light)] mb-4">"${suggestion.reasoning}"</p>`;
+                    suggestion.proverbs.forEach(p => {
+                        const fullProverb = state.proverbs.find(fp => fp.id === p.id);
+                        if (fullProverb) {
+                             htmlResult += `<div class="p-3 mb-3 bg-[var(--color-bg)] rounded-lg border-l-4 border-dashed border-[var(--color-secondary)]">
+                                            <p class="font-semibold text-sm text-[var(--color-heading)]">Justification du sage :</p>
+                                            <p class="italic text-sm">"${p.justification}"</p>
+                                          </div>`;
+                            htmlResult += createProverbCardHTML(fullProverb);
+                        }
+                    });
+                    dom.ai.resultFeedback.innerHTML = htmlResult;
+                } catch (e) {
+                    dom.ai.resultFeedback.innerHTML = `<p class="text-red-500 text-center">Le sage doit se reposer. Une erreur est survenue. <br><strong>Détail :</strong> ${e.message}</p>`;
+                } finally {
+                    dom.ai.suggestBtn.disabled = false;
+                    dom.ai.suggestBtn.innerHTML = `✨ Demander conseil`;
+                }
+            };
+            
+            // --- LOGIQUE DU QUIZ ---
+            const startQuiz = () => {
+                const quizProverbs = [];
+                const usedIds = new Set();
+                const sampleSize = Math.min(50, state.proverbs.length);
+                while(quizProverbs.length < sampleSize) {
+                    const randomIndex = Math.floor(Math.random() * state.proverbs.length);
+                    const randomProverb = state.proverbs[randomIndex];
+                    if (!usedIds.has(randomProverb.id)) {
+                        quizProverbs.push(randomProverb);
+                        usedIds.add(randomProverb.id);
+                    }
+                }
+
+                if (quizProverbs.length < 4) {
+                    dom.quizContainer.innerHTML = `<p class="text-center text-[var(--color-text-light)]">Pas assez de données pour générer un quiz.</p>`;
                     return;
                 }
+
+                const questionType = Math.random() < 0.5 ? 'meaning' : 'theme';
+                if (questionType === 'meaning') {
+                    generateMeaningQuestion(quizProverbs);
+                } else {
+                    generateThemeQuestion(quizProverbs);
+                }
+            };
+
+            const generateMeaningQuestion = (quizProverbs) => {
+                const correctAnswer = quizProverbs[Math.floor(Math.random() * quizProverbs.length)];
+                let options = [correctAnswer];
+                while (options.length < 4) {
+                    const randomOption = quizProverbs[Math.floor(Math.random() * quizProverbs.length)];
+                    if (!options.some(opt => opt.id === randomOption.id)) {
+                        options.push(randomOption);
+                    }
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                dom.quizContainer.innerHTML = `<p class="text-center text-lg mb-4">Que signifie ce proverbe ?</p>
+                    <p class="text-2xl font-serif text-center font-bold text-[var(--color-heading)] mb-6 p-4 bg-[var(--color-bg-alt)] rounded-lg">« ${correctAnswer.kabyle} »</p>
+                    <div id="quiz-options" class="space-y-3">
+                        ${options.map(opt => `<div class="quiz-option" data-id="${opt.id}" tabindex="0">${opt.francais}</div>`).join('')}
+                    </div><div id="quiz-feedback" class="mt-6 text-center"></div>`;
                 
-                const question = currentQuiz[quizQuestionIndex];
-                const totalQuestions = currentQuiz.length;
+                dom.quizContainer.querySelector('#quiz-options').addEventListener('click', (e) => {
+                    if(e.target.closest('.quiz-option')) handleQuizAnswer(e.target.closest('.quiz-option'), correctAnswer, 'meaning', quizProverbs);
+                });
+            };
 
-                const questionHTML = `
-                    <div id="quiz-question" class="fade-in" style="animation-delay: 0.1s;">
-                        <p class="text-lg font-semibold text-[var(--color-primary)] mb-1">Question ${quizQuestionIndex + 1} / ${totalQuestions}</p>
-                        <h3 class="text-2xl font-serif text-[var(--color-heading)] mb-6">À quel thème ce proverbe est-il le plus étroitement associé ?</h3>
-                        
-                        <p class="text-xl font-bold text-[var(--color-secondary)] mb-8 p-4 border-2 border-dashed rounded-lg bg-[var(--color-bg-alt)]/50">${question.proverbe}</p>
-                        
-                        <div id="quiz-options" class="space-y-4">
-                            ${question.options.map((option, index) => `
-                                <button class="quiz-option w-full text-left text-lg font-medium" data-answer="${option}" data-index="${index}">
-                                    ${option}
-                                </button>
-                            `).join('')}
-                        </div>
-                        
-                        <div id="quiz-feedback-box" class="mt-8 p-4 rounded-lg min-h-[50px]"></div>
-                        <button id="next-question-btn" class="w-full mt-4 px-5 py-3 bg-[var(--color-accent)] text-white font-semibold rounded-lg shadow-md transition-all duration-300 hidden">
-                            Question Suivante
-                        </button>
+            const generateThemeQuestion = (quizProverbs) => {
+                const proverb = quizProverbs[Math.floor(Math.random() * quizProverbs.length)];
+                const correctThemes = proverb.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean);
+                const correctAnswer = correctThemes[Math.floor(Math.random() * correctThemes.length)];
+
+                const uniqueThemesForOptions = [...new Set(quizProverbs.flatMap(p => p.theme.split(/[,/]/).map(t => t.trim().replace(/[()]/g, '')).filter(Boolean)))];
+                
+                let options = [correctAnswer];
+                while (options.length < 4 && options.length < uniqueThemesForOptions.length) {
+                    const randomTheme = uniqueThemesForOptions[Math.floor(Math.random() * uniqueThemesForOptions.length)];
+                    if (!options.includes(randomTheme)) options.push(randomTheme);
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                dom.quizContainer.innerHTML = `<p class="text-center text-lg mb-4">Quel est le thème principal de ce proverbe ?</p>
+                    <div class="mb-6 p-4 bg-[var(--color-bg-alt)] rounded-lg text-center">
+                        <p class="text-xl font-serif font-bold text-[var(--color-heading)] italic">« ${proverb.kabyle} »</p>
+                        <p class="text-[var(--color-text-light)]">— ${proverb.francais}</p>
                     </div>
-                `;
+                    <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        ${options.map(opt => `<div class="quiz-option text-center" data-theme="${opt}" tabindex="0">${opt}</div>`).join('')}
+                    </div><div id="quiz-feedback" class="mt-6 text-center"></div>`;
 
-                dom.quizContainer.innerHTML = questionHTML;
-                attachQuizListeners();
+                dom.quizContainer.querySelector('#quiz-options').addEventListener('click', (e) => {
+                    if(e.target.closest('.quiz-option')) handleQuizAnswer(e.target.closest('.quiz-option'), correctAnswer, 'theme', quizProverbs);
+                });
             };
             
-            const attachQuizListeners = () => {
-                const optionsContainer = document.getElementById('quiz-options');
-                const nextBtn = document.getElementById('next-question-btn');
-                const feedbackBox = document.getElementById('quiz-feedback-box');
-                const questionData = currentQuiz[quizQuestionIndex];
-                let answered = false;
+            const handleQuizAnswer = (selectedElement, correctAnswer, type) => {
+                const isCorrect = (type === 'meaning')
+                    ? parseInt(selectedElement.dataset.id) === correctAnswer.id
+                    : normalizeText(selectedElement.dataset.theme) === normalizeText(correctAnswer);
 
-                optionsContainer.addEventListener('click', (e) => {
-                    if (answered) return;
-                    
-                    const optionBtn = e.target.closest('.quiz-option');
-                    if (!optionBtn) return;
-                    
-                    answered = true;
-                    const selectedAnswer = optionBtn.dataset.answer;
-                    
-                    // Disable all options
-                    optionsContainer.querySelectorAll('.quiz-option').forEach(btn => btn.disabled = true);
+                document.querySelectorAll('.quiz-option').forEach(el => {
+                    el.setAttribute('disabled', true);
+                    const elIsCorrect = (type === 'meaning')
+                        ? parseInt(el.dataset.id) === correctAnswer.id
+                        : normalizeText(el.dataset.theme) === normalizeText(correctAnswer);
+                    if(elIsCorrect) el.classList.add('correct');
+                });
+                
+                if(!isCorrect) selectedElement.classList.add('incorrect');
+                
+                const feedback = dom.quizContainer.querySelector('#quiz-feedback');
+                const correctAnswerText = type === 'meaning' ? correctAnswer.francais : correctAnswer;
+                feedback.innerHTML = `<p class="text-xl font-bold ${isCorrect ? 'text-green-500' : 'text-red-500'}">${isCorrect ? 'Bravo !' : 'Dommage !'}</p>
+                    ${!isCorrect ? `<p class="mt-2">La bonne réponse était : <strong class="font-semibold">"${correctAnswerText}"</strong></p>` : ''}
+                    <button id="next-quiz-btn" class="mt-4 px-6 py-2 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:scale-105 transition-transform">Question suivante</button>`;
+                
+                const nextBtn = document.getElementById('next-quiz-btn');
+                nextBtn.addEventListener('click', startQuiz);
+                nextBtn.focus();
+            };
 
-                    if (selectedAnswer === questionData.correctAnswer) {
-                        quizScore++;
-                        optionBtn.classList.add('correct');
-                        feedbackBox.innerHTML = '<p class="text-xl font-bold text-green-700 dark:text-green-400">✅ Bonne Réponse !</p>';
-                    } else {
-                        optionBtn.classList.add('incorrect');
-                        // Highlight correct answer
-                        optionsContainer.querySelector(`[data-answer="${questionData.correctAnswer}"]`).classList.add('correct');
-                        feedbackBox.innerHTML = `<p class="text-xl font-bold text-red-700 dark:text-red-400">❌ Mauvaise Réponse. La bonne réponse était : <span class="text-[var(--color-primary)]">${questionData.correctAnswer}</span></p>`;
+            // --- GESTION DES ÉVÉNEMENTS ---
+            const setupInfiniteScroll = () => {
+                const observer = new IntersectionObserver((entries) => {
+                    const firstEntry = entries[0];
+                    if (firstEntry.isIntersecting && !state.isLoading) {
+                        loadNextChunk(false);
+                    }
+                }, { threshold: 0.1 });
+
+                observer.observe(dom.loaderContainer);
+            };
+
+            const setupEventListeners = () => {
+                dom.searchInput.addEventListener('input', debounce(() => loadNextChunk(true), 350));
+                
+                dom.clearSearchBtn.addEventListener('click', () => {
+                    dom.searchInput.value = '';
+                    loadNextChunk(true); // This will correctly reset to the initial empty state
+                    dom.searchInput.focus();
+                });
+                
+                dom.goToExplorerBtn.addEventListener('click', () => setActiveTab('explorer-tab'));
+                
+                dom.randomBtn.addEventListener('click', () => {
+                    if (!state.isCoreDataLoaded) return showToast("Veuillez attendre le chargement des proverbes.", true);
+
+                    dom.searchInput.value = '';
+                    resetThemeFilter(false);
+
+                    dom.initialLoadMessage.classList.add('hidden');
+                    dom.loaderContainer.classList.add('hidden');
+
+                    if (state.proverbs.length === 0) {
+                        dom.resultsContainer.innerHTML = '';
+                        dom.noResults.classList.remove('hidden');
+                        state.displayedProverbs = [];
+                        updateAvailableThemes();
+                        return;
                     }
                     
-                    nextBtn.classList.remove('hidden');
+                    dom.noResults.classList.add('hidden');
+
+                    const randomProverbs = [];
+                    const usedIds = new Set();
+                    const count = Math.min(20, state.proverbs.length);
+
+                    while (randomProverbs.length < count) {
+                        const randomIndex = Math.floor(Math.random() * state.proverbs.length);
+                        const randomProverb = state.proverbs[randomIndex];
+                        if (!usedIds.has(randomProverb.id)) {
+                            randomProverbs.push(randomProverb);
+                            usedIds.add(randomProverb.id);
+                        }
+                    }
+
+                    renderChunk(dom.resultsContainer, randomProverbs, '', false);
+                    state.displayedProverbs = randomProverbs;
+                    updateAvailableThemes();
+                    dom.resultsFeedback.textContent = `Affichage de ${count} proverbes aléatoires.`;
+                });
+
+                window.addEventListener('scroll', () => dom.backToTopBtn.classList.toggle('visible', window.scrollY > 300));
+                dom.backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+                dom.navButtons.forEach(button => button.addEventListener('click', () => setActiveTab(button.dataset.tab)));
+
+                dom.themeListContainer.addEventListener('click', (e) => {
+                    if (e.target.matches('.theme-pill-button')) {
+                        state.activeTheme = e.target.dataset.theme;
+                        sessionStorage.setItem('inzan_theme_filter', state.activeTheme);
+                        dom.themeListContainer.querySelector('.active')?.classList.remove('active');
+                        e.target.classList.add('active');
+                        e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        loadNextChunk(true);
+                    }
+                });
+
+                document.body.addEventListener('click', e => {
+                    const card = e.target.closest('[data-id]');
+                    if (!card) return;
+                    
+                    const proverbId = parseInt(card.dataset.id);
+                    const proverb = state.proverbs.find(p => p.id === proverbId);
+                    if (!proverb) return;
+
+                    if (e.target.closest('.explain-btn')) getProverbExplanation(proverb);
+                    if (e.target.closest('.favorite-btn')) toggleFavorite(proverbId);
+                    if (e.target.closest('.copy-btn')) navigator.clipboard.writeText(`« ${proverb.kabyle} »\n— ${proverb.francais}`).then(() => showToast("✅ Proverbe copié !"));
+                    if (e.target.closest('.share-btn')) {
+                        if (navigator.share) navigator.share({ title: 'Proverbe Kabyle', text: `Découvrez ce proverbe kabyle : « ${proverb.kabyle} »\n— ${proverb.francais}`, url: window.location.href }).catch(console.error);
+                        else showToast("Le partage n'est pas supporté sur ce navigateur.", true);
+                    }
+                    if (e.target.closest('.card-theme-badge')) {
+                         e.stopPropagation();
+                         const themeToFilter = e.target.closest('.card-theme-badge').dataset.theme;
+                         setActiveTab('explorer-tab');
+                         setTimeout(() => {
+                            dom.searchInput.value = ''; // Clear search to focus on theme
+                            state.activeTheme = themeToFilter;
+                            loadNextChunk(true);
+                         }, 100);
+                    }
+                });
+
+                dom.modal.closeBtn.addEventListener('click', closeModal);
+                dom.modal.backdrop.addEventListener('click', closeModal);
+
+                dom.aboutBtn.addEventListener('click', () => openModal("À propos de l'Œuvre", `<p>Cette collection numérique est un hommage à la richesse de la sagesse populaire kabyle. Elle est basée sur une partie des données patiemment récoltées par Monsieur <strong>Remḍan At Menṣur</strong> dans son </strong>Dictionnaire</strong> de proverbes Kabyles, dont le travail a permis de préserver et de partager ces trésors culturels.</p><p>Ce site a pour vocation de rendre ces proverbes accessibles à tous, de manière interactive et moderne. Il a été conçu comme un outil d'apprentissage et de découverte, enrichi par des technologies contemporaines pour explorer et comprendre l'esprit de la tradition kabyle.</p>`));
+
+                dom.themeToggle.addEventListener('click', () => {
+                    const isDark = dom.html.classList.toggle('dark');
+                    localStorage.setItem('inzan_theme', isDark ? 'dark' : 'light');
+                    dom.themeIcons.light.classList.toggle('hidden', isDark);
+                    dom.themeIcons.dark.classList.toggle('hidden', !isDark);
                 });
                 
-                nextBtn.addEventListener('click', () => {
-                    quizQuestionIndex++;
-                    renderQuizQuestion();
+                dom.ai.suggestBtn.addEventListener('click', () => {
+                    const context = dom.ai.contextInput.value.trim();
+                    if (!context) return showToast("Veuillez décrire une situation.", true);
+                    getAISuggestion(context);
                 });
             };
             
-            const renderQuizResults = () => {
-                const total = currentQuiz.length;
-                const percent = (quizScore / total) * 100;
-                
-                let feedbackText = '';
-                let feedbackColor = 'text-[var(--color-primary)]';
-                if (percent === 100) {
-                    feedbackText = "Félicitations ! Vous êtes un véritable Sage ! 🌟";
-                    feedbackColor = 'text-green-600 dark:text-green-400';
-                } else if (percent >= 60) {
-                    feedbackText = "Très bien ! Vous maîtrisez une bonne partie de la sagesse. 👍";
-                } else {
-                    feedbackText = "Continuez à apprendre ! La sagesse s'acquiert avec le temps. 📚";
-                    feedbackColor = 'text-amber-600 dark:text-amber-400';
-                }
-
-                const resultsHTML = `
-                    <div id="quiz-results" class="text-center fade-in" style="animation-delay: 0.1s;">
-                        <h3 class="text-3xl font-serif text-[var(--color-heading)] mb-4">Résultats du Quiz</h3>
-                        <div class="p-8 bg-[var(--color-bg-alt)] rounded-xl shadow-lg">
-                            <p class="text-6xl font-extrabold ${feedbackColor}">${quizScore}/${total}</p>
-                            <p class="text-xl font-bold mt-2 ${feedbackColor}">(${Math.round(percent)}%)</p>
-                        </div>
-                        <p class="text-2xl font-serif mt-6 ${feedbackColor}">${feedbackText}</p>
-                        
-                        <button id="retake-quiz-btn" class="w-full mt-8 px-5 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg shadow-md hover:scale-[1.02] transition-transform">
-                            Recommencer un Quiz
-                        </button>
-                    </div>
-                `;
-                
-                dom.quizContainer.innerHTML = resultsHTML;
-                document.getElementById('retake-quiz-btn').addEventListener('click', generateQuizData);
-            };
-            
-            const generateQuiz = () => {
-                if (allProverbs.length > 0) {
-                    generateQuizData();
-                } else {
-                    // Quiz container already shows a loader/message, will be updated by main()
-                }
-            };
-            
-            // --- About Modal ---
-            dom.aboutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const aboutContent = `
-                    <h3>À Propos de Inzan n Teqbaylit</h3>
-                    <p>Cette application a été conçue pour préserver et partager la richesse des proverbes (Inzan) et de la sagesse populaire kabyle.</p>
-                    
-                    <h3>Source des Données</h3>
-                    <p>Une grande partie de cette collection provient des 4 tomes de l'œuvre magistrale de **Monsieur Aomar SIDER** : **"INZAN amek i d-llan"** (Origines des proverbes et expressions kabyles). Nous remercions Monsieur SIDER pour son travail monumental de préservation de ce trésor culturel.</p>
-                    
-                    <h3>Technologie</h3>
-                    <ul>
-                        <li>**Front-end**: HTML, CSS (TailwindCSS) et JavaScript pur (vanilla JS).</li>
-                        <li>**Recherche & Filtres**: Tous les filtres et la logique de recherche sont exécutés localement, garantissant une rapidité et une confidentialité maximales.</li>
-                        <li>**Sage AI**: La fonctionnalité "Sage AI" est une simulation illustrant le potentiel d'un modèle d'IA générative appliqué au patrimoine oral.</li>
-                    </ul>
-                    
-                    <h3>Développeur</h3>
-                    <p>Application développée par **TAMAZIRT Boussad**.</p>
-                    <p class="text-sm text-[var(--color-text-light)]">Dernière mise à jour : Octobre 2025</p>
-                `;
-                openModal('En Savoir Plus', aboutContent);
-            });
-            
-            // --- Back to Top ---
-            window.addEventListener('scroll', () => {
-                dom.backToTop.classList.toggle('visible', window.scrollY > 300);
-            });
-            dom.backToTop.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
-
-            // --- Data Loading & Initialization ---
-
+            // --- PROCESSUS DE DÉMARRAGE ---
             const main = () => {
+                const savedTheme = localStorage.getItem('inzan_theme') || 'light';
+                dom.html.classList.toggle('dark', savedTheme === 'dark');
+                dom.themeIcons.light.classList.toggle('hidden', savedTheme === 'dark');
+                dom.themeIcons.dark.classList.toggle('hidden', savedTheme === 'light');
+
+                setupEventListeners();
+                setupInfiniteScroll();
+                setActiveTab('accueil-tab'); 
+                
                 fetch('proverbs.json')
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Erreur HTTP: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
-                        // CORRECTION de l'erreur: Cannot read properties of undefined (reading 'length')
-                        // S'assure que allProverbs est un tableau, même si data.proverbs est undefined ou null.
-                        allProverbs = Array.isArray(data.proverbs) ? data.proverbs : [];
-
-                        if (allProverbs.length === 0) {
-                             // Si le tableau est vide ou si la clé était manquante, lance une erreur explicite pour le catch.
-                             throw new Error("Le fichier 'proverbs.json' est vide ou mal structuré. Vérifiez qu'il contient bien une clé 'proverbs' qui est un tableau non vide.");
-                        }
-
-                        // Set proverb of the day (will now work as allProverbs is guaranteed to be a non-empty array)
-                        const start = new Date(2023, 0, 1);
-                        const today = new Date();
-                        const diffTime = Math.abs(today - start);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        const dailyIndex = diffDays % allProverbs.length;
+                        state.proverbs = data.map((p, index) => ({ 
+                            ...p, 
+                            id: index,
+                            kabyle_norm: normalizeText(p.kabyle),
+                            francais_norm: normalizeText(p.francais),
+                            theme_norm: normalizeText(p.theme)
+                        }));
+                        state.isCoreDataLoaded = true;
                         
-                        const dailyProverb = allProverbs[dailyIndex];
+                        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+                        const dailyProverb = state.proverbs[dayOfYear % state.proverbs.length];
                         dom.proverbOfTheDayCard.innerHTML = createProverbCardHTML(dailyProverb, true);
 
                         updateAvailableThemes();
@@ -1224,14 +1117,13 @@
                     })
                     .catch(error => {
                         console.error("Could not load proverbs:", error);
-                        // L'affichage de l'erreur est amélioré grâce à la nouvelle erreur lancée dans le bloc .then
                         const errorMessage = `<h1 class="text-2xl font-bold text-red-600">Erreur de chargement</h1>
                             <p class="text-red-500 mt-2">Impossible de charger la banque de proverbes (proverbs.json). <br> ${error.message}</p>
-                            <p class="mt-4 text-[var(--color-text-light)]">Veuillez vérifier que le fichier est bien présent à la racine, qu'il est accessible et que sa structure JSON est correcte (e.g., {"proverbs": [...]}).</p>`;
+                            <p class="mt-4 text-[var(--color-text-light)]">Veuillez vérifier que le fichier est bien présent et non corrompu.</p>`;
                         dom.initialLoadMessage.innerHTML = errorMessage;
-                        dom.proverbOfTheDayCard.innerHTML = `<p class=\"text-center text-red-500\">Erreur de chargement.</p>`;
-                        dom.themeListContainer.innerHTML = `<p class=\"text-center text-red-500 text-sm\">Erreur.</p>`;
-                        dom.quizContainer.innerHTML = `<p class=\"text-center text-red-500\">Erreur de chargement des données.</p>`;
+                        dom.proverbOfTheDayCard.innerHTML = `<p class="text-center text-red-500">Erreur de chargement.</p>`;
+                        dom.themeListContainer.innerHTML = `<p class="text-center text-red-500 text-sm">Erreur.</p>`;
+                        dom.quizContainer.innerHTML = `<p class="text-center text-red-500">Erreur de chargement des données.</p>`;
                         setTimeout(() => dom.splashScreen.classList.add('hidden'), 100);
                     });
             };
