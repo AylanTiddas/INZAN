@@ -531,12 +531,6 @@
                 if (keywords.length === 0) return text;
 
                 const regex = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-                const normalizedText = normalizeText(text);
-                let result = '';
-                let lastIndex = 0;
-                
-                // We need to match on the normalized text but highlight the original text
-                // This is complex, so for simplicity we'll highlight based on original text match
                 return text.replace(regex, `<span class="search-highlight">$1</span>`);
             };
             
@@ -632,7 +626,6 @@
                 const query = dom.searchInput.value;
                 const normalizedQuery = normalizeText(query);
                 
-                // Don't search if query is too short and no theme is selected
                 if (normalizedQuery.length < 2 && state.activeTheme === 'tous') {
                     state.currentFilteredProverbs = [];
                     return;
@@ -647,7 +640,10 @@
                     if (keywords.length === 0) return true;
 
                     const searchableText = `${p.kabyle_norm} ${p.francais_norm} ${p.theme_norm}`;
-                    return keywords.every(keyword => searchableText.includes(keyword));
+                    
+                    // CORRECTION : Remplacement de .every() par .some()
+                    // Affiche les résultats si AU MOINS UN des mots-clés correspond (recherche "OU").
+                    return keywords.some(keyword => searchableText.includes(keyword));
                 });
             };
 
@@ -979,7 +975,7 @@
                     if (!state.isCoreDataLoaded) return;
 
                     performFilterAndSearch();
-                    const sourceProverbs = (state.currentFilteredProverbs.length > 0) ? state.currentFilteredProverbs : state.proverbs;
+                    const sourceProverbs = (state.currentFilteredProverbs.length > 0 && dom.searchInput.value) ? state.currentFilteredProverbs : state.proverbs;
                     
                     dom.explorerMessage.classList.add('hidden');
                     dom.loadMoreBtn.classList.add('hidden');
@@ -1002,7 +998,7 @@
                     renderChunk(dom.resultsContainer, randomProverbs, '', false);
                     
                     let feedback = `Affichage de ${count} proverbes aléatoires`;
-                    if (state.currentFilteredProverbs.length > 0) {
+                    if (state.currentFilteredProverbs.length > 0 && dom.searchInput.value) {
                         feedback += ` correspondant à vos critères.`;
                     }
                     dom.resultsFeedback.textContent = feedback;
