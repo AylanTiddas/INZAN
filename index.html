@@ -445,7 +445,7 @@
                 // Accueil
                 proverbOfTheDayCard: document.getElementById('proverb-of-the-day-card'),
                 
-                // Explorer (CORRIGÉ)
+                // Explorer
                 searchInput: document.getElementById('search-input'),
                 randomBtn: document.getElementById('random-btn'),
                 themeListContainer: document.getElementById('theme-list-container'),
@@ -510,6 +510,18 @@
                 // Supprime les accents et passe en minuscule
                 return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             };
+            
+            /**
+             * Assure que la propriété 'theme' d'un proverbe est toujours un tableau.
+             * Fixe l'erreur (proverb.theme || []).map is not a function.
+             */
+            const getThemesAsArray = (proverb) => {
+                if (!proverb || !proverb.theme) return [];
+                if (Array.isArray(proverb.theme)) return proverb.theme;
+                // Si c'est une chaîne de caractères (potentiellement une erreur de données), la convertir en tableau
+                if (typeof proverb.theme === 'string') return [proverb.theme];
+                return [];
+            };
 
             /**
              * Fonction de surlignage simple.
@@ -539,10 +551,14 @@
                 const proverbText = highlightText(proverb.proverb, highlightTerm);
                 const translationText = highlightText(proverb.translation, highlightTerm);
                 
+                // Utiliser getThemesAsArray pour garantir que themes est un tableau
+                const themes = getThemesAsArray(proverb); 
+                
                 // Utiliser highlightText pour les thèmes si le terme recherché correspond à un thème
-                const themeBadges = (proverb.theme || []).map(theme => {
+                const themeBadges = themes.map(theme => {
                     // On surligne le thème si le terme correspond
                     const themeHighlighted = highlightText(theme, highlightTerm);
+                    // Utiliser l'original `theme` (non highlighté) pour `data-theme`
                     return `<span class="card-theme-badge text-xs font-medium px-2 py-1 rounded-full bg-[var(--color-bg-alt)] hover:bg-[var(--color-accent)] text-[var(--color-text)] cursor-pointer select-none" data-theme="${theme.replace(/'/g, "\\'")}" title="Filtrer par ce thème">${themeHighlighted}</span>`;
                 }).join('');
 
@@ -611,7 +627,8 @@
 
             const renderProverbInModal = (proverb) => {
                 if (!proverb) return;
-
+                
+                const themes = getThemesAsArray(proverb); // Garantir tableau
                 const isFav = isFavorite(proverb.id);
                 
                 dom.modalTitle.textContent = proverb.proverb;
@@ -623,9 +640,9 @@
                             <p>${proverb.explanation}</p>
                         ` : '<p class="text-[var(--color-text-light)]">Aucune explication détaillée disponible pour ce proverbe.</p>'}
                         
-                        ${(proverb.theme && proverb.theme.length > 0) ? `
+                        ${(themes.length > 0) ? `
                             <h3 class="text-xl font-serif text-[var(--color-primary)] mb-2">Thèmes</h3>
-                            <p>${proverb.theme.join(', ')}</p>
+                            <p>${themes.join(', ')}</p>
                         ` : ''}
                     </div>
                 `;
@@ -659,10 +676,11 @@
 
                 return proverbs.filter(p => {
                     let matchesTheme = true;
+                    const themes = getThemesAsArray(p); // Garantir tableau
 
                     // 1. Filtrage par thème
                     if (theme) {
-                        matchesTheme = p.theme && p.theme.includes(theme);
+                        matchesTheme = themes.includes(theme);
                     }
                     
                     if (!matchesTheme) return false; // Inutile de continuer si le thème ne correspond pas
@@ -671,7 +689,8 @@
                     if (normalizedSearchTerm.length >= 2) {
                         const normalizedProverb = normalizeString(p.proverb);
                         const normalizedTranslation = normalizeString(p.translation || '');
-                        const normalizedTheme = normalizeString(p.theme ? p.theme.join(' ') : '');
+                        // Joindre le tableau de thèmes pour la recherche textuelle
+                        const normalizedTheme = normalizeString(themes.join(' '));
                         
                         // La recherche porte sur le proverbe, la traduction ET le thème
                         const matchesSearch = normalizedProverb.includes(normalizedSearchTerm) ||
@@ -686,7 +705,7 @@
                          return normalizedProverb.startsWith(normalizedSearchTerm);
                     }
                     
-                    // Si pas de terme de recherche (moins de 1 caractère), le match est validé si le thème match
+                    // Si pas de terme de recherche (moins de 2 caractères), le match est validé si le thème match
                     return true;
                 });
             };
@@ -696,7 +715,7 @@
              */
             const displayProverbsSlice = () => {
                 const start = currentDisplayCount;
-                const end = Math.min(filteredProverbs.length, start + PROVERBS_PERV_PAGE);
+                const end = Math.min(filteredProverbs.length, start + PROVERBS_PER_PAGE);
                 
                 const slice = filteredProverbs.slice(start, end);
 
@@ -771,16 +790,20 @@
                 const searchTerm = dom.searchInput.value.trim();
                 
                 // Si l'utilisateur tape une recherche, on désactive le filtre de thème pour la recherche textuelle
+                // et on le conserve si la recherche est vide.
                 const activeTheme = searchTerm === '' ? currentTheme : null;
 
                 // Mettre à jour l'état visuel du filtre de thème
                 document.querySelectorAll('.theme-pill-button').forEach(btn => {
                     const btnTheme = btn.dataset.theme;
                     btn.classList.remove('active');
-                    if (searchTerm === '' && btnTheme === currentTheme) {
+                    
+                    if (searchTerm === '' && btnTheme === (currentTheme || '')) {
                         btn.classList.add('active');
-                    } else if (searchTerm === '' && !currentTheme && btnTheme === '') {
-                        btn.classList.add('active');
+                    }
+                    
+                    if (searchTerm !== '' && btnTheme === '') {
+                        btn.classList.add('active'); // Activer "Tout" quand une recherche textuelle est en cours
                     }
                 });
                 
@@ -798,7 +821,7 @@
 
                 // 1. Désactiver la recherche et le filtre de thème
                 dom.searchInput.value = '';
-                currentTheme = null;
+                currentTheme = ''; // Réinitialiser à "Tout"
                 document.querySelectorAll('.theme-pill-button').forEach(btn => btn.classList.remove('active'));
                 document.querySelector('.theme-pill-button[data-theme=""]').classList.add('active'); // Activer "Tout"
 
@@ -841,7 +864,7 @@
             const updateAvailableThemes = () => {
                 dom.themeListContainer.innerHTML = '';
                 // Extraire tous les thèmes uniques
-                allThemes = [...new Set(proverbs.flatMap(p => p.theme || []).filter(t => t))].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+                allThemes = [...new Set(proverbs.flatMap(p => getThemesAsArray(p)).filter(t => t))].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
 
                 allThemes.unshift("Tout"); // Ajout de l'option "Tout" au début
 
@@ -863,21 +886,22 @@
                         
                         // Si l'utilisateur clique sur le thème actif, on le désélectionne (sauf pour "Tout")
                         if (newTheme === currentTheme && newTheme !== '') {
-                            currentTheme = null;
+                            currentTheme = ''; // Désélectionner le thème, revenir à "Tout"
                         } else {
                             currentTheme = newTheme;
                         }
                         
                         // Mettre à jour les classes actives des boutons
                         document.querySelectorAll('.theme-pill-button').forEach(btn => btn.classList.remove('active'));
-                        if (currentTheme) {
-                             document.querySelector(`.theme-pill-button[data-theme='${currentTheme}']`).classList.add('active');
-                        } else {
-                             // Si aucun thème sélectionné, active "Tout"
-                             document.querySelector(`.theme-pill-button[data-theme='']`).classList.add('active');
+                        
+                        // Si un thème est sélectionné (ou 'Tout' est le défaut), l'activer
+                        const activeDataTheme = currentTheme === null ? '' : currentTheme; 
+                        const targetBtn = document.querySelector(`.theme-pill-button[data-theme='${activeDataTheme}']`);
+                        if (targetBtn) {
+                             targetBtn.classList.add('active');
                         }
 
-                        filterAndDisplayProverbs('', currentTheme);
+                        filterAndDisplayProverbs('', activeDataTheme); // Lancer le filtre
                     });
 
                     dom.themeListContainer.appendChild(button);
